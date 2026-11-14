@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load invenshop %}
+
+{% block titulo %}Usuarios y roles{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Administración</span>
+            <h1>Usuarios y roles</h1>
+            <p class="text-muted-2 mb-0">Solo el Administrador puede modificar roles y desactivar cuentas.</p>
+        </div>
+        <a href="{% url 'admin:index' %}" class="btn btn-soft">
+            <i class="bi bi-shield-lock me-2"></i>Django Admin
+        </a>
+    </div>
+
+    <div class="surface-card surface-card-pad mb-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-7">
+                <label class="form-label" for="q">Buscar usuario</label>
+                <input id="q" type="search" name="q" class="form-control" value="{{ q }}"
+                       placeholder="Nombre, apellido o correo electrónico">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="rol">Rol</label>
+                <select id="rol" name="rol" class="form-select">
+                    <option value="">Todos los roles</option>
+                    {% for valor, etiqueta in roles %}
+                        <option value="{{ valor }}" {% if rol_actual == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-brand flex-grow-1" type="submit"><i class="bi bi-search me-1"></i>Buscar</button>
+                <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-soft" title="Limpiar"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <div class="surface-card overflow-hidden">
+        {% if usuarios %}
+            <div class="table-responsive">
+                <table class="table table-invenshop align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Usuario</th>
+                            <th scope="col">Rol</th>
+                            <th scope="col" class="text-center">Pedidos</th>
+                            <th scope="col" class="text-center">Estado</th>
+                            <th scope="col">Alta</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="avatar-circle">{{ usuario.iniciales }}</span>
+                                        <div>
+                                            <div class="fw-semibold text-dark">
+                                                {{ usuario.nombre_completo }}
+                                                {% if usuario.pk == user.pk %}<span class="chip ms-1" style="font-size:.62rem;">Vos</span>{% endif %}
+                                            </div>
+                                            <div class="text-muted-2" style="font-size:.78rem;">{{ usuario.email }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge-estado {% if usuario.rol == 'Admin' %}estado-pagado{% elif usuario.rol == 'Empleado' %}estado-enviado{% else %}chip-neutral{% endif %}">
+                                        {{ usuario.get_rol_display }}
+                                    </span>
+                                </td>
+                                <td class="text-center">{{ usuario.cantidad_pedidos }}</td>
+                                <td class="text-center">
+                                    {% if usuario.is_active %}
+                                        <span class="text-success small fw-semibold"><i class="bi bi-check-circle me-1"></i>Activa</span>
+                                    {% else %}
+                                        <span class="text-danger small fw-semibold"><i class="bi bi-slash-circle me-1"></i>Inactiva</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted-2 small">{{ usuario.date_joined|date:"d/m/Y" }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'usuarios:usuario_update' usuario.pk %}" class="btn-table" title="Editar rol y estado">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-people"></i></div>
+                <h2>No se encontraron usuarios</h2>
+                <p>Probá con otro término de búsqueda o cambiá el filtro de rol.</p>
+                <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-brand">Ver todos</a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% include "partials/paginacion.html" %}
+
+    <div class="surface-card surface-card-pad mt-4">
+        <h2 class="h6 fw-bold mb-2">Matriz de permisos</h2>
+        <div class="table-responsive">
+            <table class="table table-invenshop mb-0">
+                <thead>
+                    <tr><th>Rol</th><th>Permisos</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-estado estado-pagado">Administrador</span></td>
+                        <td>Acceso total: usuarios y roles, catálogo, pedidos, reportes y Django Admin.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-estado estado-enviado">Empleado</span></td>
+                        <td>Productos, categorías, stock y cambio de estado de pedidos. Sin gestión de usuarios.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="chip chip-neutral">Cliente</span></td>
+                        <td>Catálogo, carrito, compras, historial propio y edición de su perfil.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}Pedido confirmado{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5" style="max-width: 900px;">
+    <div class="surface-card surface-card-pad text-center">
+        <div class="confirm-icon"><i class="bi bi-check-lg"></i></div>
+        <span class="eyebrow">Compra registrada</span>
+        <h1 class="h2 fw-bold mt-1 mb-2">¡Gracias por tu compra!</h1>
+        <p class="text-muted-2 mb-1">
+            Tu pedido <strong class="text-dark">{{ pedido.numero }}</strong> quedó registrado correctamente.
+        </p>
+        <p class="text-muted-2 small mb-4">
+            Fecha: {{ pedido.fecha_creacion|date:"d/m/Y H:i" }} · Estado actual:
+            <span class="badge-estado {{ pedido.estado|estado_badge }}">{{ pedido.estado }}</span>
+        </p>
+
+        <div class="d-flex flex-wrap gap-2 justify-content-center mb-4">
+            <a href="{% url 'pedidos:detalle' pedido.pk %}" class="btn btn-brand">
+                <i class="bi bi-receipt me-2"></i>Ver detalle del pedido
+            </a>
+            <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
+                <i class="bi bi-grid me-2"></i>Seguir comprando
+            </a>
+        </div>
+
+        <div class="alert alert-invenshop alert-info text-start mb-0" style="background:#f5f8ff;" role="note">
+            <i class="bi bi-info-circle-fill"></i>
+            <div class="small">
+                <strong>Próximo paso:</strong> el equipo de InvenShop revisará el pedido y actualizará su estado
+                a <em>Pagado</em> y luego a <em>Enviado</em>. Podés consultar el avance desde
+                <a href="{% url 'pedidos:lista' %}" class="fw-semibold">Mis pedidos</a>.
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+        <div class="col-lg-7">
+            <div class="surface-card surface-card-pad h-100">
+                <h2 class="h5 fw-bold mb-3">Productos del pedido</h2>
+                {% for detalle in pedido.detalles.all %}
+                    <div class="mini-item">
+                        {% if detalle.producto.imagen %}
+                            <img src="{{ detalle.producto.imagen.url }}" alt="" class="mini-thumb">
+                        {% else %}
+                            <img src="{% static 'img/placeholder.svg' %}" alt="" class="mini-thumb">
+                        {% endif %}
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold text-dark small">{{ detalle.producto.nombre }}</div>
+                            <div class="text-muted-2" style="font-size:.76rem;">
+                                {{ detalle.cantidad }} × {{ detalle.precio_unitario|pesos }}
+                            </div>
+                        </div>
+                        <div class="fw-semibold small">{{ detalle.subtotal|pesos }}</div>
+                    </div>
+                {% endfor %}
+                <div class="summary-total">
+                    <span class="fw-semibold text-dark">Total</span>
+                    <span class="amount">{{ pedido.total|pesos }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="surface-card surface-card-pad h-100">
+                <h2 class="h5 fw-bold mb-3">Datos de envío</h2>
+                <div class="detail-meta">
+                    <div class="row-item"><i class="bi bi-geo-alt"></i>{{ pedido.direccion }}</div>
+                    <div class="row-item"><i class="bi bi-building"></i>{{ pedido.ciudad }} ({{ pedido.codigo_postal }})</div>
+                    <div class="row-item"><i class="bi bi-telephone"></i>{{ pedido.telefono_contacto }}</div>
+                    {% if pedido.notas %}
+                        <div class="row-item"><i class="bi bi-chat-left-text"></i>{{ pedido.notas }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

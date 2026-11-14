@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block titulo %}Mi perfil{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Mi cuenta</span>
+            <h1>Mi perfil</h1>
+            <p class="text-muted-2 mb-0">Administrá tus datos personales y tu contraseña.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="surface-card surface-card-pad text-center">
+                <span class="avatar-circle avatar-lg mx-auto">{{ user.iniciales }}</span>
+                <h2 class="h5 fw-bold mt-3 mb-1">{{ user.nombre_completo }}</h2>
+                <p class="text-muted-2 small mb-2">{{ user.email }}</p>
+                <span class="badge-estado {% if user.rol == 'Admin' %}estado-pagado{% elif user.rol == 'Empleado' %}estado-enviado{% else %}chip-neutral{% endif %}">
+                    {{ user.get_rol_display }}
+                </span>
+                <hr class="my-4">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'pedidos:lista' %}" class="btn btn-soft">
+                        <i class="bi bi-receipt me-2"></i>Mis pedidos
+                    </a>
+                    <a href="{% url 'usuarios:password_change' %}" class="btn btn-outline-brand">
+                        <i class="bi bi-key me-2"></i>Cambiar contraseña
+                    </a>
+                    {% if user.es_gestor %}
+                        <a href="{% url 'panel:dashboard' %}" class="btn btn-brand">
+                            <i class="bi bi-speedometer2 me-2"></i>Ir al panel
+                        </a>
+                    {% endif %}
+                </div>
+                <p class="small text-muted-2 mt-4 mb-0">
+                    <i class="bi bi-calendar3 me-1"></i>Cuenta creada el {{ user.date_joined|date:"d/m/Y" }}
+                </p>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="surface-card surface-card-pad">
+                <h2 class="h5 fw-bold mb-1">Datos personales</h2>
+                <p class="text-muted-2 small mb-4">
+                    Podés modificar tu nombre, apellido y teléfono. El correo electrónico identifica tu cuenta.
+                </p>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-invenshop alert-danger" role="alert">
+                            <i class="bi bi-exclamation-octagon-fill"></i>
+                            <div>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+                        </div>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-6">{% include "partials/campo.html" with campo=form.nombre %}</div>
+                        <div class="col-md-6">{% include "partials/campo.html" with campo=form.apellido %}</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label" for="email-perfil">Correo electrónico</label>
+                                <input id="email-perfil" class="form-control" value="{{ user.email }}" disabled>
+                                <div class="form-text">El email no se puede cambiar desde el perfil.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">{% include "partials/campo.html" with campo=form.telefono %}</div>
+                    </div>
+                    <button type="submit" class="btn btn-brand mt-2">
+                        <i class="bi bi-check-lg me-2"></i>Guardar cambios
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

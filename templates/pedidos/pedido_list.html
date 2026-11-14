@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% load invenshop %}
+
+{% block titulo %}{% if user.es_gestor %}Pedidos{% else %}Mis pedidos{% endif %}{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">{% if user.es_gestor %}Gestión de ventas{% else %}Mi historial{% endif %}</span>
+            <h1>{% if user.es_gestor %}Pedidos{% else %}Mis pedidos{% endif %}</h1>
+            <p class="text-muted-2 mb-0">
+                {% if user.es_gestor %}
+                    Consultá todos los pedidos, filtrá por estado y actualizá su avance.
+                {% else %}
+                    Seguí el estado de tus compras y consultá cada detalle.
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
+            <i class="bi bi-bag me-2"></i>Seguir comprando
+        </a>
+    </div>
+
+    <div class="surface-card surface-card-pad mb-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="q">Buscar</label>
+                <input id="q" type="search" name="q" class="form-control" value="{{ q }}"
+                       placeholder="{% if user.es_gestor %}N° de pedido, nombre o email del cliente{% else %}Número de pedido{% endif %}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="estado">Estado</label>
+                <select id="estado" name="estado" class="form-select">
+                    <option value="">Todos los estados</option>
+                    {% for valor, etiqueta in estados %}
+                        <option value="{{ valor }}" {% if estado_actual == valor %}selected{% endif %}>{{ etiqueta }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-brand w-100" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'pedidos:lista' %}" class="btn btn-soft w-100">Limpiar</a>
+            </div>
+        </form>
+    </div>
+
+    {% if pedidos %}
+        <div class="d-grid gap-3">
+            {% for pedido in pedidos %}
+                <a href="{% url 'pedidos:detalle' pedido.pk %}" class="surface-card order-card text-decoration-none">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="kpi-icon mb-0" style="width:44px;height:44px;">
+                            <i class="bi bi-receipt"></i>
+                        </span>
+                        <div>
+                            <div class="order-number">{{ pedido.numero }}</div>
+                            <div class="text-muted-2" style="font-size:.8rem;">
+                                {{ pedido.fecha_creacion|date:"d/m/Y H:i" }}
+                                · {{ pedido.cantidad_items }} ítem{{ pedido.cantidad_items|pluralize }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if user.es_gestor %}
+                        <div class="d-none d-md-block">
+                            <div class="small text-muted-2">Cliente</div>
+                            <div class="fw-semibold text-dark small">{{ pedido.usuario.nombre_completo }}</div>
+                            <div class="text-muted-2" style="font-size:.74rem;">{{ pedido.usuario.email }}</div>
+                        </div>
+                    {% endif %}
+
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge-estado {{ pedido.estado|estado_badge }}">{{ pedido.estado }}</span>
+                        <div class="text-end">
+                            <div class="fw-bold text-dark">{{ pedido.total|pesos }}</div>
+                            <div class="text-muted-2" style="font-size:.75rem;">Total</div>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted"></i>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+        {% include "partials/paginacion.html" %}
+    {% else %}
+        <div class="surface-card empty-state">
+            <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+            <h2>{% if user.es_gestor %}No hay pedidos registrados{% else %}Todavía no tenés pedidos{% endif %}</h2>
+            <p>
+                {% if user.es_gestor %}
+                    Cuando un cliente confirme una compra, el pedido va a aparecer en este listado.
+                {% else %}
+                    Agregá productos al carrito y finalizá tu primera compra. Acá vas a poder seguir su estado.
+                {% endif %}
+            </p>
+            <a href="{% url 'catalogo:producto_list' %}" class="btn btn-brand">
+                <i class="bi bi-grid me-2"></i>Explorar catálogo
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

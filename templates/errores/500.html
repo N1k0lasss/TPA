@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block titulo %}Error del servidor{% endblock %}
+
+{% block contenido %}
+<div class="container py-5">
+    <div class="surface-card empty-state mx-auto" style="max-width: 620px;">
+        <div class="empty-icon" style="background: var(--is-warning-soft); color: var(--is-warning);">
+            <i class="bi bi-tools"></i>
+        </div>
+        <span class="eyebrow">Error 500</span>
+        <h1 class="h2 fw-bold mt-1">Algo salió mal</h1>
+        <p>
+            Ocurrió un error inesperado en el servidor. Ya se registró para su revisión;
+            probá nuevamente en unos instantes.
+        </p>
+        <a href="{% url 'catalogo:producto_list' %}" class="btn btn-brand">
+            <i class="bi bi-house me-2"></i>Volver al inicio
+        </a>
+    </div>
+</div>
+{% endblock %}

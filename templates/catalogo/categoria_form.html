@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block titulo %}{% if object %}Editar categoría{% else %}Nueva categoría{% endif %}{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5" style="max-width: 720px;">
+    <nav aria-label="Ruta de navegación">
+        <ol class="breadcrumb breadcrumb-invenshop">
+            <li class="breadcrumb-item"><a href="{% url 'panel:dashboard' %}">Panel</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'catalogo:gestion_categorias' %}">Categorías</a></li>
+            <li class="breadcrumb-item active">{% if object %}Editar{% else %}Nueva{% endif %}</li>
+        </ol>
+    </nav>
+
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Catálogo</span>
+            <h1>{% if object %}Editar categoría{% else %}Nueva categoría{% endif %}</h1>
+        </div>
+    </div>
+
+    <form method="post" novalidate class="surface-card surface-card-pad">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-invenshop alert-danger" role="alert">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                <div>{% for error in form.non_field_errors %}{{ error }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
+            </div>
+        {% endif %}
+        {% include "partials/campo.html" with campo=form.nombre %}
+        {% include "partials/campo.html" with campo=form.descripcion %}
+        {% include "partials/campo.html" with campo=form.slug %}
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" class="btn btn-brand">
+                <i class="bi bi-check-lg me-2"></i>{% if object %}Guardar cambios{% else %}Crear categoría{% endif %}
+            </button>
+            <a href="{% url 'catalogo:gestion_categorias' %}" class="btn btn-soft">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

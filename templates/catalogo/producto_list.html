@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}Catálogo{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+
+    <section class="hero mb-4 mb-lg-5">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="hero-badge"><i class="bi bi-lightning-charge-fill"></i> Inventario en tiempo real</span>
+                <h1 class="mt-3">Todo lo que buscás, listo para llevar.</h1>
+                <p class="mt-3 mb-0">
+                    Explorá el catálogo, agregá productos al carrito y confirmá tu pedido en minutos.
+                    Stock actualizado y seguimiento de cada compra.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <a href="#catalogo" class="btn btn-accent btn-lg">
+                        <i class="bi bi-grid me-2"></i>Ver productos
+                    </a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'pedidos:lista' %}" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-receipt me-2"></i>Mis pedidos
+                        </a>
+                    {% else %}
+                        <a href="{% url 'usuarios:registro' %}" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-person-plus me-2"></i>Crear cuenta
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hero-stats">
+                    <div><strong>{{ total_resultados }}</strong><span>productos disponibles</span></div>
+                    <div><strong>{{ categorias|length }}</strong><span>categorías</span></div>
+                    <div><strong>24/7</strong><span>compra online</span></div>
+                </div>
+            </div>
+            <div class="col-lg-4 d-none d-lg-block text-end">
+                <div class="d-inline-grid gap-3" style="grid-template-columns: repeat(2, 96px);">
+                    <div class="rounded-4 d-grid place-items-center" style="background: rgba(255,255,255,.10); height: 96px; place-items: center;">
+                        <i class="bi bi-box-seam fs-2"></i>
+                    </div>
+                    <div class="rounded-4" style="background: rgba(255,255,255,.16); height: 96px; display:grid; place-items:center;">
+                        <i class="bi bi-bag-check fs-2"></i>
+                    </div>
+                    <div class="rounded-4" style="background: rgba(245,158,11,.9); color:#422006; height: 96px; display:grid; place-items:center;">
+                        <i class="bi bi-truck fs-2"></i>
+                    </div>
+                    <div class="rounded-4" style="background: rgba(255,255,255,.10); height: 96px; display:grid; place-items:center;">
+                        <i class="bi bi-shield-check fs-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div id="catalogo" class="row g-4">
+        <aside class="col-lg-3">
+            <div class="surface-card filter-card mb-3">
+                <h2>Buscar</h2>
+                <form action="{% url 'catalogo:producto_list' %}" method="get">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                        <input type="search" name="q" class="form-control border-start-0" value="{{ q }}"
+                               placeholder="Nombre o descripción" aria-label="Buscar productos" maxlength="100">
+                    </div>
+                    {% if categoria_actual %}
+                        <input type="hidden" name="categoria" value="{{ categoria_actual.slug }}">
+                    {% endif %}
+                    {% if orden and orden != "nombre" %}
+                        <input type="hidden" name="orden" value="{{ orden }}">
+                    {% endif %}
+                    <button class="btn btn-brand w-100 mt-2" type="submit">Buscar</button>
+                </form>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="mb-0">Categorías</h2>
+                    {% if categoria_actual or q %}
+                        <a href="{% url 'catalogo:producto_list' %}" class="small">Limpiar</a>
+                    {% endif %}
+                </div>
+                <ul class="category-list">
+                    <li>
+                        <a class="{% if not categoria_actual %}active{% endif %}"
+                           href="?{% querystring categoria=None page=None %}">
+                            Todas
+                        </a>
+                    </li>
+                    {% for categoria in categorias %}
+                        <li>
+                            <a class="{% if categoria_actual.pk == categoria.pk %}active{% endif %}"
+                               href="?{% querystring categoria=categoria.slug page=None %}">
+                                <span>{{ categoria.nombre }}</span>
+                                <span class="count">{{ categoria.total_productos }}</span>
+                            </a>
+                        </li>
+                    {% empty %}
+                        <li class="text-muted small px-2">Todavía no hay categorías.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="surface-card p-3 d-none d-lg-block">
+                <div class="d-flex gap-2 align-items-start">
+                    <span class="kpi-icon mb-0" style="width:36px;height:36px;font-size:.9rem;"><i class="bi bi-info-circle"></i></span>
+                    <div>
+                        <div class="fw-semibold text-dark small">¿Necesitás ayuda?</div>
+                        <p class="mb-0 text-muted-2" style="font-size:.8rem;">
+                            Cuando confirmes tu pedido vas a poder seguir su estado desde <em>Mis pedidos</em>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="col-lg-9">
+            <div class="toolbar">
+                <div>
+                    <span class="fw-semibold text-dark">{{ paginator.count|default:total_resultados }}</span>
+                    <span class="text-muted-2">
+                        {% if paginator.count == 1 %}producto encontrado{% else %}productos encontrados{% endif %}
+                    </span>
+                    {% if categoria_actual %}
+                        <span class="chip ms-2">{{ categoria_actual.nombre }}</span>
+                    {% endif %}
+                    {% if q %}
+                        <span class="chip chip-neutral ms-1">“{{ q }}”</span>
+                    {% endif %}
+                </div>
+                <form method="get" class="d-flex align-items-center gap-2">
+                    {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+                    {% if categoria_actual %}<input type="hidden" name="categoria" value="{{ categoria_actual.slug }}">{% endif %}
+                    <label for="orden" class="small text-muted-2 text-nowrap">Ordenar por</label>
+                    <select id="orden" name="orden" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="nombre" {% if orden == "nombre" %}selected{% endif %}>Nombre (A-Z)</option>
+                        <option value="-nombre" {% if orden == "-nombre" %}selected{% endif %}>Nombre (Z-A)</option>
+                        <option value="precio" {% if orden == "precio" %}selected{% endif %}>Menor precio</option>
+                        <option value="-precio" {% if orden == "-precio" %}selected{% endif %}>Mayor precio</option>
+                        <option value="recientes" {% if orden == "recientes" %}selected{% endif %}>Más recientes</option>
+                    </select>
+                </form>
+            </div>
+
+            {% if productos %}
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3 g-lg-4">
+                    {% for producto in productos %}
+                        <div class="col">{% include "partials/producto_card.html" with producto=producto %}</div>
+                    {% endfor %}
+                </div>
+                {% include "partials/paginacion.html" %}
+            {% else %}
+                <div class="surface-card empty-state">
+                    <div class="empty-icon"><i class="bi bi-search"></i></div>
+                    <h2>No encontramos productos</h2>
+                    <p>Probá con otro término de búsqueda, elegí otra categoría o mirá todo el catálogo.</p>
+                    <a href="{% url 'catalogo:producto_list' %}" class="btn btn-brand">
+                        <i class="bi bi-arrow-counterclockwise me-2"></i>Ver todo el catálogo
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

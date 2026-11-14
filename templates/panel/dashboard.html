@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% load invenshop %}
+
+{% block titulo %}Panel de gestión{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Panel de gestión</span>
+            <h1>Hola, {{ user.nombre }}</h1>
+            <p class="text-muted-2 mb-0">Este es el resumen operativo de InvenShop.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'catalogo:producto_create' %}" class="btn btn-brand">
+                <i class="bi bi-plus-lg me-2"></i>Nuevo producto
+            </a>
+            <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
+                <i class="bi bi-shop me-2"></i>Ver tienda
+            </a>
+        </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-4 g-3 g-lg-4 mb-4">
+        <div class="col">
+            <div class="surface-card kpi-card">
+                <div class="kpi-icon green"><i class="bi bi-cash-coin"></i></div>
+                <div class="kpi-label">Ventas registradas</div>
+                <div class="kpi-value">{{ ventas_totales|pesos }}</div>
+                <div class="kpi-hint">{{ pedidos_validos }} pedido(s) no cancelado(s)</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="surface-card kpi-card">
+                <div class="kpi-icon amber"><i class="bi bi-hourglass-split"></i></div>
+                <div class="kpi-label">Pedidos pendientes</div>
+                <div class="kpi-value">{{ pedidos_pendientes }}</div>
+                <div class="kpi-hint">Esperando confirmación de pago</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="surface-card kpi-card">
+                <div class="kpi-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="kpi-label">Ticket promedio</div>
+                <div class="kpi-value">{{ ticket_promedio|pesos }}</div>
+                <div class="kpi-hint">Sobre pedidos válidos</div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="surface-card kpi-card">
+                <div class="kpi-icon rose"><i class="bi bi-box-seam"></i></div>
+                <div class="kpi-label">Valor del inventario</div>
+                <div class="kpi-value">{{ valor_inventario|pesos }}</div>
+                <div class="kpi-hint">{{ productos_activos }} producto(s) activo(s)</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="surface-card surface-card-pad h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h5 fw-bold mb-0">Pedidos por estado</h2>
+                    <span class="chip">{{ pedidos_totales }} total</span>
+                </div>
+                {% if pedidos_totales %}
+                    <div class="state-bars">
+                        {% for item in por_estado %}
+                            <div class="state-bar {% if item.nombre == 'Enviado' %}enviado{% elif item.nombre == 'Pagado' %}pagado{% elif item.nombre == 'Pendiente' %}pendiente{% elif item.nombre == 'Cancelado' %}cancelado{% endif %}">
+                                <div class="labels">
+                                    <span>{{ item.nombre }}</span>
+                                    <span>{{ item.cantidad }}</span>
+                                </div>
+                                <div class="track">
+                                    <div class="fill" style="width: {% widthratio item.cantidad pedidos_totales 100 %}%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="small text-muted-2 mb-0">Todavía no hay pedidos para mostrar.</p>
+                {% endif %}
+
+                <hr class="my-4">
+                <div class="d-flex justify-content-between small">
+                    <span class="text-muted-2">Clientes registrados</span>
+                    <strong class="text-dark">{{ total_clientes }}</strong>
+                </div>
+                <div class="d-flex justify-content-between small mt-2">
+                    <span class="text-muted-2">Usuarios totales</span>
+                    <strong class="text-dark">{{ total_usuarios }}</strong>
+                </div>
+                <div class="d-flex justify-content-between small mt-2">
+                    <span class="text-muted-2">Productos sin stock</span>
+                    <strong class="{% if productos_sin_stock %}text-danger{% else %}text-success{% endif %}">{{ productos_sin_stock }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="surface-card surface-card-pad h-100">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 fw-bold mb-0">Stock bajo</h2>
+                    <a href="{% url 'catalogo:gestion_productos' %}?estado=bajo" class="small fw-semibold">Ver todos</a>
+                </div>
+                <p class="text-muted-2 small mb-2">Productos con 5 unidades o menos.</p>
+                {% for producto in stock_bajo %}
+                    <div class="stock-item">
+                        <div class="flex-grow-1 min-width-0">
+                            <a href="{% url 'catalogo:producto_update' producto.pk %}" class="fw-semibold text-dark small d-block text-truncate">
+                                {{ producto.nombre }}
+                            </a>
+                            <span class="text-muted-2" style="font-size:.74rem;">{{ producto.categoria.nombre }}</span>
+                        </div>
+                        <span class="stock-qty {% if producto.stock == 0 %}zero{% endif %}">
+                            {% if producto.stock == 0 %}Agotado{% else %}{{ producto.stock }} u.{% endif %}
+                        </span>
+                    </div>
+                {% empty %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-check2-circle text-success fs-2"></i>
+                        <p class="small text-muted-2 mb-0 mt-2">Todo el stock está en niveles saludables.</p>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="surface-card surface-card-pad h-100">
+                <h2 class="h5 fw-bold mb-3">Accesos rápidos</h2>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'catalogo:gestion_productos' %}" class="btn btn-soft text-start">
+                        <i class="bi bi-box-seam me-2"></i>Productos y stock
+                    </a>
+                    <a href="{% url 'catalogo:gestion_categorias' %}" class="btn btn-soft text-start">
+                        <i class="bi bi-tags me-2"></i>Categorías
+                    </a>
+                    <a href="{% url 'pedidos:lista' %}" class="btn btn-soft text-start">
+                        <i class="bi bi-receipt me-2"></i>Pedidos
+                    </a>
+                    {% if user.es_admin %}
+                        <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-soft text-start">
+                            <i class="bi bi-people me-2"></i>Usuarios y roles
+                        </a>
+                        <a href="{% url 'admin:index' %}" class="btn btn-soft text-start">
+                            <i class="bi bi-shield-lock me-2"></i>Django Admin
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft text-start">
+                        <i class="bi bi-shop me-2"></i>Ver catálogo público
+                    </a>
+                </div>
+
+                <hr class="my-4">
+                <h3 class="h6 fw-bold mb-2">Matriz de permisos</h3>
+                <ul class="small text-muted-2 ps-3 mb-0">
+                    <li><strong class="text-dark">Admin:</strong> acceso total, usuarios y reportes.</li>
+                    <li><strong class="text-dark">Empleado:</strong> catálogo, stock y pedidos.</li>
+                    <li><strong class="text-dark">Cliente:</strong> compras e historial propio.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="surface-card overflow-hidden mt-4">
+        <div class="d-flex justify-content-between align-items-center p-3 p-lg-4 pb-2">
+            <div>
+                <h2 class="h5 fw-bold mb-0">Últimos pedidos</h2>
+                <p class="text-muted-2 small mb-0">Los 8 pedidos más recientes del sistema.</p>
+            </div>
+            <a href="{% url 'pedidos:lista' %}" class="btn btn-soft btn-sm">Ver todos</a>
+        </div>
+        {% if ultimos_pedidos %}
+            <div class="table-responsive">
+                <table class="table table-invenshop align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Pedido</th>
+                            <th scope="col">Cliente</th>
+                            <th scope="col">Fecha</th>
+                            <th scope="col" class="text-center">Ítems</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col" class="text-end">Total</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in ultimos_pedidos %}
+                            <tr>
+                                <td class="fw-semibold text-dark">{{ pedido.numero }}</td>
+                                <td>
+                                    <div class="small fw-semibold text-dark">{{ pedido.usuario.nombre_completo }}</div>
+                                    <div class="text-muted-2" style="font-size:.74rem;">{{ pedido.usuario.email }}</div>
+                                </td>
+                                <td class="text-muted-2 small">{{ pedido.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                <td class="text-center">{{ pedido.cantidad_items }}</td>
+                                <td><span class="badge-estado {{ pedido.estado|estado_badge }}">{{ pedido.estado }}</span></td>
+                                <td class="text-end fw-semibold">{{ pedido.total|pesos }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'pedidos:detalle' pedido.pk %}" class="btn-table" title="Ver pedido">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state py-4">
+                <div class="empty-icon"><i class="bi bi-receipt"></i></div>
+                <h2 class="h5">Todavía no hay pedidos</h2>
+                <p class="mb-0">Cuando los clientes compren, los pedidos van a aparecer acá.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}Categorías{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Organización</span>
+            <h1>Categorías</h1>
+            <p class="text-muted-2 mb-0">Agrupá los productos para que los clientes encuentren lo que buscan.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'catalogo:gestion_productos' %}" class="btn btn-soft">
+                <i class="bi bi-box-seam me-2"></i>Productos
+            </a>
+            <a href="{% url 'catalogo:categoria_create' %}" class="btn btn-brand">
+                <i class="bi bi-plus-lg me-2"></i>Nueva categoría
+            </a>
+        </div>
+    </div>
+
+    {% if categorias %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+            {% for categoria in categorias %}
+                <div class="col">
+                    <article class="surface-card h-100 p-4 d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <span class="kpi-icon mb-0" style="width:40px;height:40px;"><i class="bi bi-tag"></i></span>
+                            <span class="chip chip-neutral">{{ categoria.total_productos }} producto{{ categoria.total_productos|pluralize }}</span>
+                        </div>
+                        <h2 class="h5 fw-bold mt-3 mb-1">{{ categoria.nombre }}</h2>
+                        <p class="text-muted-2 small mb-2">/{{ categoria.slug }}</p>
+                        <p class="small mb-4">{{ categoria.descripcion|default:"Sin descripción."|truncatechars:110 }}</p>
+                        <div class="mt-auto d-flex gap-2">
+                            <a href="{% url 'catalogo:producto_list' %}?categoria={{ categoria.slug }}" class="btn btn-soft btn-sm flex-grow-1" target="_blank" rel="noopener">
+                                <i class="bi bi-eye me-1"></i>Ver en tienda
+                            </a>
+                            <a href="{% url 'catalogo:categoria_update' categoria.pk %}" class="btn-table" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'catalogo:categoria_delete' categoria.pk %}" class="btn-table danger" title="Eliminar">
+                                <i class="bi bi-trash3"></i>
+                            </a>
+                        </div>
+                    </article>
+                </div>
+            {% endfor %}
+        </div>
+        <p class="form-text mt-4 mb-0">
+            <i class="bi bi-shield-exclamation me-1"></i>
+            Una categoría con productos asociados no puede eliminarse: primero reasigná o eliminá esos productos.
+        </p>
+    {% else %}
+        <div class="surface-card empty-state">
+            <div class="empty-icon"><i class="bi bi-tags"></i></div>
+            <h2>Todavía no hay categorías</h2>
+            <p>Creá la primera categoría para empezar a organizar el catálogo.</p>
+            <a href="{% url 'catalogo:categoria_create' %}" class="btn btn-brand">
+                <i class="bi bi-plus-lg me-2"></i>Crear categoría
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

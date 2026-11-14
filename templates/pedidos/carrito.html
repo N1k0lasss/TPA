@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}Mi carrito{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Compra</span>
+            <h1>Mi carrito</h1>
+            <p class="text-muted-2 mb-0">
+                {% if items %}{{ items|length }} producto{{ items|length|pluralize }} en tu carrito.{% else %}Todavía no agregaste productos.{% endif %}
+            </p>
+        </div>
+        <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
+            <i class="bi bi-arrow-left me-2"></i>Seguir comprando
+        </a>
+    </div>
+
+    {% if items %}
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="surface-card surface-card-pad">
+                    {% for item in items %}
+                        <div class="cart-row">
+                            <a href="{{ item.producto.get_absolute_url }}">
+                                {% if item.producto.imagen %}
+                                    <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" class="cart-thumb">
+                                {% else %}
+                                    <img src="{% static 'img/placeholder.svg' %}" alt="{{ item.producto.nombre }}" class="cart-thumb">
+                                {% endif %}
+                            </a>
+                            <div>
+                                <div class="product-cat">{{ item.producto.categoria.nombre }}</div>
+                                <a href="{{ item.producto.get_absolute_url }}" class="cart-title d-inline-block mt-1">
+                                    {{ item.producto.nombre }}
+                                </a>
+                                <div class="small text-muted-2 mt-1">
+                                    {{ item.precio|pesos }} por unidad · {{ item.producto.stock }} disponibles
+                                </div>
+                                {% if item.stock_insuficiente %}
+                                    <div class="text-danger small fw-semibold mt-1">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        Solo quedan {{ item.producto.stock }} unidades. Ajustá la cantidad.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="cart-actions d-flex flex-wrap align-items-center justify-content-end gap-3">
+                                <form action="{% url 'carrito:actualizar' item.producto.pk %}" method="post" class="d-flex align-items-center gap-2">
+                                    {% csrf_token %}
+                                    <div class="qty-group" data-qty>
+                                        <button type="button" data-step="-1" aria-label="Restar una unidad">−</button>
+                                        <input type="number" name="cantidad" value="{{ item.cantidad }}" min="1"
+                                               max="{{ item.producto.stock }}" aria-label="Cantidad de {{ item.producto.nombre }}">
+                                        <button type="button" data-step="1" aria-label="Sumar una unidad">+</button>
+                                    </div>
+                                    <button class="btn btn-soft btn-sm" type="submit" title="Actualizar cantidad">
+                                        <i class="bi bi-arrow-repeat"></i>
+                                    </button>
+                                </form>
+                                <div class="text-end">
+                                    <div class="fw-bold text-dark">{{ item.subtotal|pesos }}</div>
+                                    <form action="{% url 'carrito:quitar' item.producto.pk %}" method="post">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 mt-1"
+                                                style="font-size:.78rem;text-decoration:none;">
+                                            <i class="bi bi-trash3 me-1"></i>Quitar
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+                    <a href="{% url 'catalogo:producto_list' %}" class="small fw-semibold">
+                        <i class="bi bi-plus-lg me-1"></i>Agregar más productos
+                    </a>
+                    <form action="{% url 'carrito:vaciar' %}" method="post" data-confirm="¿Seguro que querés vaciar el carrito?">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-link btn-sm text-muted-2 p-0" style="font-size:.82rem;text-decoration:none;">
+                            <i class="bi bi-x-circle me-1"></i>Vaciar carrito
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="surface-card summary-card">
+                    <h2 class="h5 fw-bold mb-3">Resumen de compra</h2>
+                    <div class="summary-line">
+                        <span class="text-muted-2">Productos ({{ items|length }})</span>
+                        <span>{{ total|pesos }}</span>
+                    </div>
+                    <div class="summary-line">
+                        <span class="text-muted-2">Envío</span>
+                        <span class="text-muted-2">A coordinar</span>
+                    </div>
+                    <div class="summary-total">
+                        <span class="fw-semibold text-dark">Total</span>
+                        <span class="amount">{{ total|pesos }}</span>
+                    </div>
+
+                    {% if hay_problemas_de_stock %}
+                        <div class="alert alert-invenshop alert-warning mt-3 mb-0" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i>
+                            <span>Hay productos sin stock suficiente. Ajustá las cantidades antes de finalizar.</span>
+                        </div>
+                    {% elif user.is_authenticated %}
+                        <a href="{% url 'pedidos:checkout' %}" class="btn btn-brand w-100 btn-lg mt-3">
+                            <i class="bi bi-credit-card me-2"></i>Finalizar compra
+                        </a>
+                    {% else %}
+                        <a href="{% url 'usuarios:login' %}?next={% url 'pedidos:checkout' %}" class="btn btn-brand w-100 btn-lg mt-3">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar para comprar
+                        </a>
+                        <p class="form-text text-center mt-2 mb-0">
+                            Tu carrito se conserva al iniciar sesión.
+                        </p>
+                    {% endif %}
+
+                    <div class="d-flex align-items-center gap-2 mt-3 text-muted-2" style="font-size:.78rem;">
+                        <i class="bi bi-shield-lock"></i>
+                        <span>Compra protegida y datos de envío validados.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="surface-card empty-state">
+            <div class="empty-icon"><i class="bi bi-bag"></i></div>
+            <h2>Tu carrito está vacío</h2>
+            <p>Explorá el catálogo y agregá los productos que te interesen. Se guardan en tu sesión hasta que confirmes la compra.</p>
+            <a href="{% url 'catalogo:producto_list' %}" class="btn btn-brand btn-lg">
+                <i class="bi bi-grid me-2"></i>Explorar catálogo
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

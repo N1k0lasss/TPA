@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}Finalizar compra{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="checkout-steps" aria-label="Pasos de la compra">
+        <span class="step done"><i class="bi bi-check-circle-fill"></i>Carrito</span>
+        <span class="sep"></span>
+        <span class="step active"><i class="bi bi-truck"></i>Datos de envío</span>
+        <span class="sep"></span>
+        <span class="step"><i class="bi bi-check2-square"></i>Confirmación</span>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Checkout</span>
+            <h1>Finalizar compra</h1>
+            <p class="text-muted-2 mb-0">Revisá tu pedido y completá los datos de envío.</p>
+        </div>
+        <a href="{% url 'carrito:detalle' %}" class="btn btn-soft">
+            <i class="bi bi-arrow-left me-2"></i>Volver al carrito
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form method="post" novalidate id="form-checkout">
+                {% csrf_token %}
+                <div class="surface-card surface-card-pad">
+                    <h2 class="h5 fw-bold mb-1">Datos de envío</h2>
+                    <p class="text-muted-2 small mb-4">Se guardan junto al pedido para conservar el histórico.</p>
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-invenshop alert-danger" role="alert">
+                            <i class="bi bi-exclamation-octagon-fill"></i>
+                            <div>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+                        </div>
+                    {% endif %}
+
+                    {% include "partials/campo.html" with campo=form.direccion %}
+                    <div class="row">
+                        <div class="col-md-7">{% include "partials/campo.html" with campo=form.ciudad %}</div>
+                        <div class="col-md-5">{% include "partials/campo.html" with campo=form.codigo_postal %}</div>
+                    </div>
+                    {% include "partials/campo.html" with campo=form.telefono_contacto %}
+                    {% include "partials/campo.html" with campo=form.notas %}
+
+                    <div class="surface-card p-3 mt-3" style="background:#fbfbfe;">
+                        <div class="form-check">
+                            {{ form.confirmar }}
+                            <label class="form-check-label ms-1" for="{{ form.confirmar.id_for_label }}">
+                                {{ form.confirmar.label }}
+                            </label>
+                        </div>
+                        {% for error in form.confirmar.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-brand btn-lg w-100 mt-4">
+                        <i class="bi bi-bag-check me-2"></i>Confirmar pedido · {{ total|pesos }}
+                    </button>
+                    <p class="form-text text-center mt-2 mb-0">
+                        Al confirmar se valida el stock y se descuentan las unidades compradas.
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="surface-card summary-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h2 class="h5 fw-bold mb-0">Tu pedido</h2>
+                    <span class="chip">{{ items|length }} producto{{ items|length|pluralize }}</span>
+                </div>
+                <p class="text-muted-2 small">Revisá las cantidades antes de confirmar.</p>
+
+                {% for item in items %}
+                    <div class="mini-item">
+                        {% if item.producto.imagen %}
+                            <img src="{{ item.producto.imagen.url }}" alt="" class="mini-thumb">
+                        {% else %}
+                            <img src="{% static 'img/placeholder.svg' %}" alt="" class="mini-thumb">
+                        {% endif %}
+                        <div class="flex-grow-1 min-width-0">
+                            <div class="fw-semibold text-dark small text-truncate">{{ item.producto.nombre }}</div>
+                            <div class="text-muted-2" style="font-size:.76rem;">
+                                {{ item.cantidad }} × {{ item.precio|pesos }}
+                            </div>
+                        </div>
+                        <div class="fw-semibold small text-nowrap">{{ item.subtotal|pesos }}</div>
+                    </div>
+                {% endfor %}
+
+                <div class="summary-line mt-3">
+                    <span class="text-muted-2">Subtotal</span>
+                    <span>{{ total|pesos }}</span>
+                </div>
+                <div class="summary-line">
+                    <span class="text-muted-2">Envío</span>
+                    <span class="text-muted-2">A coordinar</span>
+                </div>
+                <div class="summary-total">
+                    <span class="fw-semibold text-dark">Total</span>
+                    <span class="amount">{{ total|pesos }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-3 text-muted-2" style="font-size:.78rem;">
+                    <i class="bi bi-truck"></i>
+                    <span>El costo de envío se coordina al despachar el pedido.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

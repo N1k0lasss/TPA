@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block titulo %}Página no encontrada{% endblock %}
+
+{% block contenido %}
+<div class="container py-5">
+    <div class="surface-card empty-state mx-auto" style="max-width: 620px;">
+        <div class="empty-icon"><i class="bi bi-compass"></i></div>
+        <span class="eyebrow">Error 404</span>
+        <h1 class="h2 fw-bold mt-1">No encontramos esa página</h1>
+        <p>
+            El enlace puede estar roto o el contenido ya no existe. Podés volver al catálogo
+            y continuar navegando.
+        </p>
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a href="{% url 'catalogo:producto_list' %}" class="btn btn-brand">
+                <i class="bi bi-grid me-2"></i>Ver catálogo
+            </a>
+            <a href="{% url 'carrito:detalle' %}" class="btn btn-soft">Mi carrito</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}{{ producto.nombre }}{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <nav aria-label="Ruta de navegación">
+        <ol class="breadcrumb breadcrumb-invenshop">
+            <li class="breadcrumb-item"><a href="{% url 'catalogo:producto_list' %}">Catálogo</a></li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'catalogo:producto_list' %}?categoria={{ producto.categoria.slug }}">{{ producto.categoria.nombre }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre }}</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4 g-lg-5">
+        <div class="col-lg-6">
+            <div class="product-detail-media">
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+                {% else %}
+                    <img src="{% static 'img/placeholder.svg' %}" alt="Imagen genérica de {{ producto.nombre }}">
+                {% endif %}
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <span class="chip"><i class="bi bi-shield-check"></i> Compra protegida</span>
+                <span class="chip chip-neutral"><i class="bi bi-arrow-repeat"></i> Seguimiento de pedido</span>
+                <span class="chip chip-neutral"><i class="bi bi-box-seam"></i> Stock actualizado</span>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <a href="{% url 'catalogo:producto_list' %}?categoria={{ producto.categoria.slug }}" class="product-cat">
+                {{ producto.categoria.nombre }}
+            </a>
+            <h1 class="mt-1 mb-2" style="font-size: clamp(1.8rem, 3.6vw, 2.5rem); font-weight: 800;">
+                {{ producto.nombre }}
+            </h1>
+
+            <div class="d-flex align-items-center gap-2 mb-3">
+                {% if producto.stock == 0 %}
+                    <span class="badge-estado estado-cancelado">Agotado</span>
+                {% elif producto.stock_bajo %}
+                    <span class="badge-estado estado-pendiente">¡Últimas {{ producto.stock }} unidades!</span>
+                {% else %}
+                    <span class="badge-estado estado-enviado">Disponible</span>
+                {% endif %}
+                <span class="text-muted-2 small"><i class="bi bi-box-seam me-1"></i>{{ producto.stock }} en stock</span>
+            </div>
+
+            <div class="detail-price mb-4">{{ producto.precio|pesos }}</div>
+
+            <p class="mb-4" style="white-space: pre-line;">{{ producto.descripcion }}</p>
+
+            {% if producto.disponible %}
+                {% if en_carrito %}
+                    <div class="alert alert-invenshop alert-info mb-3" role="status" style="background:#f5f8ff;">
+                        <i class="bi bi-bag-check-fill"></i>
+                        <span>Ya tenés <strong>{{ en_carrito }}</strong> unidad(es) en el carrito.
+                            <a href="{% url 'carrito:detalle' %}" class="fw-semibold ms-1">Ver carrito</a>
+                        </span>
+                    </div>
+                {% endif %}
+                <form action="{% url 'carrito:agregar' producto.pk %}" method="post" class="d-flex flex-wrap gap-2 align-items-center">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <div class="qty-group" data-qty>
+                        <button type="button" data-step="-1" aria-label="Restar una unidad">−</button>
+                        <input type="number" name="cantidad" value="1" min="1" max="{{ producto.stock }}"
+                               aria-label="Cantidad" inputmode="numeric">
+                        <button type="button" data-step="1" aria-label="Sumar una unidad">+</button>
+                    </div>
+                    <button class="btn btn-brand btn-lg flex-grow-0" type="submit">
+                        <i class="bi bi-bag-plus me-2"></i>Agregar al carrito
+                    </button>
+                    <a href="{% url 'carrito:detalle' %}" class="btn btn-soft btn-lg">Ver carrito</a>
+                </form>
+                <p class="form-text mt-2 mb-0">
+                    <i class="bi bi-info-circle me-1"></i>Podés confirmar la compra cuando estés listo. El stock se valida al finalizar.
+                </p>
+            {% else %}
+                <div class="surface-card p-3 mb-3">
+                    <div class="d-flex align-items-center gap-2 text-danger fw-semibold">
+                        <i class="bi bi-x-octagon"></i> Producto agotado por el momento
+                    </div>
+                    <p class="mb-0 text-muted-2 small mt-1">Estamos reponiendo stock. Podés seguir explorando el catálogo.</p>
+                </div>
+                <a href="{% url 'catalogo:producto_list' %}" class="btn btn-brand btn-lg">
+                    <i class="bi bi-grid me-2"></i>Seguir comprando
+                </a>
+            {% endif %}
+
+            <hr class="my-4">
+
+            <div class="detail-meta">
+                <div class="row-item"><i class="bi bi-tag"></i> Categoría: <strong class="text-dark">{{ producto.categoria.nombre }}</strong></div>
+                <div class="row-item"><i class="bi bi-upc-scan"></i> Código de producto: <strong class="text-dark">#{{ producto.pk|stringformat:"06d" }}</strong></div>
+                <div class="row-item"><i class="bi bi-clock-history"></i> Actualizado: {{ producto.fecha_actualizacion|date:"d/m/Y" }}</div>
+            </div>
+        </div>
+    </div>
+
+    {% if relacionados %}
+        <section class="mt-5 pt-3">
+            <div class="d-flex justify-content-between align-items-end mb-3">
+                <div>
+                    <span class="eyebrow">También te puede interesar</span>
+                    <h2 class="h4 fw-bold mb-0">Más de {{ producto.categoria.nombre }}</h2>
+                </div>
+                <a href="{% url 'catalogo:producto_list' %}?categoria={{ producto.categoria.slug }}" class="btn btn-soft btn-sm">
+                    Ver todo <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+                {% for producto in relacionados %}
+                    <div class="col">{% include "partials/producto_card.html" with producto=producto %}</div>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

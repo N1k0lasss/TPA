@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block titulo %}Editar usuario{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5" style="max-width: 760px;">
+    <nav aria-label="Ruta de navegación">
+        <ol class="breadcrumb breadcrumb-invenshop">
+            <li class="breadcrumb-item"><a href="{% url 'usuarios:usuario_list' %}">Usuarios</a></li>
+            <li class="breadcrumb-item active">Editar</li>
+        </ol>
+    </nav>
+
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Roles y permisos</span>
+            <h1>Editar usuario</h1>
+            <p class="text-muted-2 mb-0">{{ object.nombre_completo }} · {{ object.email }}</p>
+        </div>
+    </div>
+
+    <form method="post" novalidate class="surface-card surface-card-pad">
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+            <div class="alert alert-invenshop alert-danger" role="alert">
+                <i class="bi bi-exclamation-octagon-fill"></i>
+                <div>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+            </div>
+        {% endif %}
+
+        <div class="row">
+            <div class="col-md-6">{% include "partials/campo.html" with campo=form.nombre %}</div>
+            <div class="col-md-6">{% include "partials/campo.html" with campo=form.apellido %}</div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">{% include "partials/campo.html" with campo=form.email %}</div>
+            <div class="col-md-6">{% include "partials/campo.html" with campo=form.telefono %}</div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">{% include "partials/campo.html" with campo=form.rol %}</div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label class="form-label" for="{{ form.is_active.id_for_label }}">Estado de la cuenta</label>
+                    <div class="form-check form-switch mt-2">
+                        {{ form.is_active }}
+                        <label class="form-check-label ms-1" for="{{ form.is_active.id_for_label }}">
+                            Permitir el acceso de esta cuenta
+                        </label>
+                    </div>
+                    {% for error in form.is_active.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                    <div class="form-text">Una cuenta inactiva no puede iniciar sesión.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-invenshop alert-info" role="note" style="background:#f5f8ff;">
+            <i class="bi bi-info-circle-fill"></i>
+            <div class="small">
+                Al asignar el rol <strong>Empleado</strong> o <strong>Administrador</strong>, la cuenta
+                obtiene acceso al panel de gestión. El rol Administrador también habilita Django Admin.
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-brand"><i class="bi bi-check-lg me-2"></i>Guardar cambios</button>
+            <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-soft">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

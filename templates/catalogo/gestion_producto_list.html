@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% load static invenshop %}
+
+{% block titulo %}Gestión de productos{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="page-header">
+        <div>
+            <span class="eyebrow">Inventario</span>
+            <h1>Productos y stock</h1>
+            <p class="text-muted-2 mb-0">Administrá el catálogo, los precios y las unidades disponibles.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'catalogo:gestion_categorias' %}" class="btn btn-soft">
+                <i class="bi bi-tags me-2"></i>Categorías
+            </a>
+            <a href="{% url 'catalogo:producto_create' %}" class="btn btn-brand">
+                <i class="bi bi-plus-lg me-2"></i>Nuevo producto
+            </a>
+        </div>
+    </div>
+
+    <div class="surface-card surface-card-pad mb-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label for="q" class="form-label">Buscar</label>
+                <input id="q" type="search" name="q" class="form-control" value="{{ q }}"
+                       placeholder="Nombre o descripción del producto">
+            </div>
+            <div class="col-md-3">
+                <label for="categoria" class="form-label">Categoría</label>
+                <select id="categoria" name="categoria" class="form-select">
+                    <option value="">Todas</option>
+                    {% for categoria in categorias %}
+                        <option value="{{ categoria.slug }}" {% if categoria_actual == categoria.slug %}selected{% endif %}>
+                            {{ categoria.nombre }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="estado" class="form-label">Estado</label>
+                <select id="estado" name="estado" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="bajo" {% if estado_actual == "bajo" %}selected{% endif %}>Stock bajo (≤ {{ umbral_stock }})</option>
+                    <option value="inactivos" {% if estado_actual == "inactivos" %}selected{% endif %}>Inactivos</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-brand flex-grow-1" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+                <a href="{% url 'catalogo:gestion_productos' %}" class="btn btn-soft" title="Limpiar filtros"><i class="bi bi-x-lg"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <div class="surface-card overflow-hidden">
+        {% if productos %}
+            <div class="table-responsive">
+                <table class="table table-invenshop align-middle">
+                    <thead>
+                        <tr>
+                            <th scope="col">Producto</th>
+                            <th scope="col">Categoría</th>
+                            <th scope="col" class="text-end">Precio</th>
+                            <th scope="col" class="text-center">Stock</th>
+                            <th scope="col" class="text-center">Estado</th>
+                            <th scope="col">Actualizado</th>
+                            <th scope="col" class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        {% if producto.imagen %}
+                                            <img src="{{ producto.imagen.url }}" alt="" class="thumb-sm">
+                                        {% else %}
+                                            <img src="{% static 'img/placeholder.svg' %}" alt="" class="thumb-sm">
+                                        {% endif %}
+                                        <div>
+                                            <a href="{{ producto.get_absolute_url }}" class="fw-semibold text-dark" target="_blank" rel="noopener">
+                                                {{ producto.nombre }}
+                                            </a>
+                                            <div class="text-muted-2" style="font-size:.75rem;">#{{ producto.pk|stringformat:"05d" }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="chip chip-neutral">{{ producto.categoria.nombre }}</span></td>
+                                <td class="text-end fw-semibold text-dark">{{ producto.precio|pesos }}</td>
+                                <td class="text-center">
+                                    {% if producto.stock == 0 %}
+                                        <span class="badge-estado estado-cancelado">0</span>
+                                    {% elif producto.stock_bajo %}
+                                        <span class="badge-estado estado-pendiente">{{ producto.stock }}</span>
+                                    {% else %}
+                                        <span class="badge-estado estado-enviado">{{ producto.stock }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if producto.activo %}
+                                        <span class="text-success small fw-semibold"><i class="bi bi-check-circle me-1"></i>Activo</span>
+                                    {% else %}
+                                        <span class="text-muted small"><i class="bi bi-dash-circle me-1"></i>Inactivo</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-muted-2 small">{{ producto.fecha_actualizacion|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <div class="table-actions justify-content-end">
+                                        <a href="{{ producto.get_absolute_url }}" class="btn-table" title="Ver en tienda" target="_blank" rel="noopener">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{% url 'catalogo:producto_update' producto.pk %}" class="btn-table" title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{% url 'catalogo:producto_delete' producto.pk %}" class="btn-table danger" title="Eliminar">
+                                            <i class="bi bi-trash3"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-box-seam"></i></div>
+                <h2>No hay productos para mostrar</h2>
+                <p>Creá tu primer producto o modificá los filtros de búsqueda.</p>
+                <a href="{% url 'catalogo:producto_create' %}" class="btn btn-brand">
+                    <i class="bi bi-plus-lg me-2"></i>Crear producto
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    {% include "partials/paginacion.html" %}
+</div>
+{% endblock %}

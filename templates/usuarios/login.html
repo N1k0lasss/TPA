@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block titulo %}Iniciar sesión{% endblock %}
+
+{% block contenido %}
+<div class="container py-4 py-lg-5">
+    <div class="auth-wrap">
+        <div class="auth-card">
+            <div class="row g-0">
+                <div class="col-lg-5 d-none d-lg-block">
+                    <div class="auth-aside h-100">
+                        <div>
+                            <span class="hero-badge"><i class="bi bi-shop"></i> InvenShop</span>
+                            <h2 class="mt-3">Tu cuenta, tus compras, todo en orden.</h2>
+                            <p>Ingresá para continuar comprando y revisar el estado de tus pedidos.</p>
+                        </div>
+                        <ul>
+                            <li><i class="bi bi-check-circle-fill"></i><span>Historial completo de pedidos y estados.</span></li>
+                            <li><i class="bi bi-check-circle-fill"></i><span>Carrito guardado durante la sesión.</span></li>
+                            <li><i class="bi bi-check-circle-fill"></i><span>Datos de envío precargados al finalizar la compra.</span></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="auth-form-pad">
+                        <div class="d-lg-none mb-4">
+                            <a class="navbar-brand" href="{% url 'catalogo:producto_list' %}" style="color:var(--is-ink);">
+                                <span class="brand-mark"><i class="bi bi-bag-heart-fill"></i></span> InvenShop
+                            </a>
+                        </div>
+                        <span class="eyebrow">Bienvenido de nuevo</span>
+                        <h1 class="h3 fw-bold mt-1 mb-1">Iniciar sesión</h1>
+                        <p class="text-muted-2 mb-4">Usá el correo electrónico con el que te registraste.</p>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-invenshop alert-danger mb-3" role="alert">
+                                <i class="bi bi-exclamation-octagon-fill"></i>
+                                <div>{% for error in form.non_field_errors %}{{ error }}{% endfor %}</div>
+                            </div>
+                        {% endif %}
+
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ next }}">
+                            {% include "partials/campo.html" with campo=form.email %}
+                            {% include "partials/campo.html" with campo=form.password %}
+                            <button type="submit" class="btn btn-brand w-100 btn-lg mt-2">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Ingresar
+                            </button>
+                        </form>
+
+                        <p class="text-center text-muted-2 mt-4 mb-0">
+                            ¿Todavía no tenés cuenta?
+                            <a href="{% url 'usuarios:registro' %}" class="fw-semibold">Crear cuenta gratis</a>
+                        </p>
+                        <p class="text-center small text-muted-2 mt-2 mb-0">
+                            <a href="{% url 'catalogo:producto_list' %}"><i class="bi bi-arrow-left me-1"></i>Volver al catálogo</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
