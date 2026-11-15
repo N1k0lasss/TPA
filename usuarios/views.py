@@ -107,7 +107,9 @@ class UsuarioListView(AdminMixin, ListView):
     paginate_by = 12
 
     def get_queryset(self):
-        queryset = Usuario.objects.annotate(cantidad_pedidos=Count("pedidos"))
+        queryset = Usuario.objects.annotate(cantidad_pedidos=Count("pedidos")).order_by(
+            "apellido", "nombre"
+        )
         busqueda = self.request.GET.get("q", "").strip()
         rol = self.request.GET.get("rol", "").strip()
         if busqueda:

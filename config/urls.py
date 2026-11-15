@@ -6,10 +6,7 @@ from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from .devtests import ejecutar_tests
-
 urlpatterns = [
-    path("__tests__/", ejecutar_tests),
     path("admin/", admin.site.urls),
     path("", RedirectView.as_view(pattern_name="catalogo:producto_list", permanent=False), name="inicio"),
     path("cuenta/", include("usuarios.urls")),
