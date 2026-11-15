@@ -15,6 +15,9 @@
             <a href="{% url 'catalogo:producto_create' %}" class="btn btn-brand">
                 <i class="bi bi-plus-lg me-2"></i>Nuevo producto
             </a>
+            <a href="{% url 'panel:exportar_pedidos' %}" class="btn btn-soft">
+                <i class="bi bi-filetype-csv me-2"></i>Exportar pedidos
+            </a>
             <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
                 <i class="bi bi-shop me-2"></i>Ver tienda
             </a>
@@ -137,6 +140,9 @@
                     </a>
                     <a href="{% url 'pedidos:lista' %}" class="btn btn-soft text-start">
                         <i class="bi bi-receipt me-2"></i>Pedidos
+                    </a>
+                    <a href="{% url 'panel:exportar_pedidos' %}" class="btn btn-soft text-start">
+                        <i class="bi bi-filetype-csv me-2"></i>Reporte de pedidos (CSV)
                     </a>
                     {% if user.es_admin %}
                         <a href="{% url 'usuarios:usuario_list' %}" class="btn btn-soft text-start">

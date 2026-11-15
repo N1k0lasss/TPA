@@ -207,6 +207,94 @@ class AdminPermisosPorRolTests(TestCase):
         self.assertEqual(respuesta.status_code, 200)
 
 
+class ExportarPedidosCsvTests(TestCase):
+    """Reporte CSV: vista de función protegida con @login_required/@permission_required."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.empleado = Usuario.objects.create_user(
+            email="empleado@example.com",
+            password="ClaveSegura123!",
+            nombre="Bruno",
+            apellido="Fernández",
+            rol=Usuario.Rol.EMPLEADO,
+        )
+        cls.cliente = Usuario.objects.create_user(
+            email="cliente@example.com",
+            password="ClaveSegura123!",
+            nombre="Carla",
+            apellido="Ríos",
+        )
+        categoria = Categoria.objects.create(nombre="Reportes")
+        producto = Producto.objects.create(
+            nombre="Teclado",
+            descripcion="Mecánico",
+            precio=Decimal("25000.00"),
+            stock=5,
+            categoria=categoria,
+        )
+        cls.pedido = Pedido.objects.create(
+            usuario=cls.cliente,
+            total=Decimal("50000.00"),
+            direccion="Av. Siempre Viva 742",
+            ciudad="Rosario",
+            codigo_postal="2000",
+            telefono_contacto="3415550000",
+        )
+        DetallePedido.objects.create(
+            pedido=cls.pedido,
+            producto=producto,
+            cantidad=2,
+            precio_unitario=producto.precio,
+        )
+        cls.pedido_enviado = Pedido.objects.create(
+            usuario=cls.cliente,
+            estado=Pedido.Estado.ENVIADO,
+            total=Decimal("25000.00"),
+            direccion="Calle Falsa 123",
+            ciudad="Rosario",
+            codigo_postal="2000",
+            telefono_contacto="3415551111",
+        )
+
+    def _leer_csv(self, respuesta):
+        return respuesta.content.decode("utf-8-sig").splitlines()
+
+    def test_anonimo_redirige_al_login(self):
+        respuesta = self.client.get(reverse("panel:exportar_pedidos"))
+        self.assertRedirects(
+            respuesta,
+            f"{reverse('usuarios:login')}?next={reverse('panel:exportar_pedidos')}",
+        )
+
+    def test_cliente_no_puede_descargar_el_reporte(self):
+        self.client.force_login(self.cliente)
+        respuesta = self.client.get(reverse("panel:exportar_pedidos"))
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_empleado_descarga_el_csv(self):
+        self.client.force_login(self.empleado)
+        respuesta = self.client.get(reverse("panel:exportar_pedidos"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(respuesta["Content-Type"].startswith("text/csv"))
+        self.assertIn("attachment;", respuesta["Content-Disposition"])
+
+        filas = self._leer_csv(respuesta)
+        self.assertIn("Pedido;Fecha;Estado", filas[0])
+        self.assertTrue(any(self.pedido.numero in fila for fila in filas))
+        self.assertTrue(any("Carla Ríos" in fila for fila in filas))
+
+    def test_reporte_respeta_el_filtro_por_estado(self):
+        self.client.force_login(self.empleado)
+        respuesta = self.client.get(reverse("panel:exportar_pedidos"), {"estado": "Enviado"})
+
+        filas = self._leer_csv(respuesta)
+        cuerpo = ";".join(filas)
+        self.assertIn(self.pedido_enviado.numero, cuerpo)
+        self.assertNotIn(self.pedido.numero, cuerpo)
+
+
 class PaginasDeErrorTests(TestCase):
     def test_404_personalizado(self):
         respuesta = self.client.get("/esta-ruta-no-existe/")

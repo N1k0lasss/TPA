@@ -1,12 +1,17 @@
 """Panel de gestión: tablero con métricas y reportes básicos."""
 
+import csv
 from decimal import Decimal
 
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Count, DecimalField, ExpressionWrapper, F, Sum
+from django.http import HttpResponse
 from django.shortcuts import render
+from django.utils import timezone
 from django.views.generic import TemplateView
 
 from catalogo.models import Producto
+from pedidos.consultas import filtrar_pedidos
 from pedidos.models import Pedido
 from usuarios.mixins import GestorMixin
 from usuarios.models import Usuario
@@ -66,6 +71,78 @@ class DashboardView(GestorMixin, TemplateView):
             }
         )
         return contexto
+
+
+# ---------------------------------------------------------------------------
+# Reportes (vista basada en función con decoradores de acceso)
+# ---------------------------------------------------------------------------
+def _celda(valor):
+    """Evita que Excel interprete texto como fórmula (CSV injection)."""
+    texto = "" if valor is None else str(valor)
+    if texto.startswith(("=", "+", "-", "@")):
+        return f"'{texto}"
+    return texto
+
+
+@login_required
+@permission_required("usuarios.gestionar_tienda", raise_exception=True)
+def exportar_pedidos_csv(request):
+    """Descarga el historial de pedidos como CSV respetando los filtros.
+
+    Es la única vista basada en función del proyecto y existe para cumplir
+    el requisito de la consigna de usar `@login_required` y
+    `@permission_required` además de los mixins de las CBV.
+
+    - Anónimo -> redirección al login.
+    - Cliente autenticado -> 403 (no tiene el permiso de gestión).
+    - Empleado/Administrador -> descarga del reporte.
+    """
+    pedidos = filtrar_pedidos(
+        Pedido.objects.select_related("usuario").prefetch_related("detalles"),
+        usuario=request.user,
+        busqueda=request.GET.get("q", ""),
+        estado=request.GET.get("estado", ""),
+    ).order_by("-fecha_creacion")
+
+    respuesta = HttpResponse(content_type="text/csv; charset=utf-8")
+    nombre = f"pedidos_{timezone.localtime():%Y%m%d_%H%M}.csv"
+    respuesta["Content-Disposition"] = f'attachment; filename="{nombre}"'
+    # BOM para que Excel reconozca los acentos del archivo UTF-8.
+    respuesta.write("\ufeff")
+
+    escritor = csv.writer(respuesta, delimiter=";")
+    escritor.writerow(
+        [
+            "Pedido",
+            "Fecha",
+            "Estado",
+            "Cliente",
+            "Email",
+            "Teléfono",
+            "Dirección",
+            "Ciudad",
+            "Código postal",
+            "Ítems",
+            "Total",
+        ]
+    )
+    for pedido in pedidos:
+        escritor.writerow(
+            [
+                pedido.numero,
+                timezone.localtime(pedido.fecha_creacion).strftime("%d/%m/%Y %H:%M"),
+                pedido.estado,
+                _celda(pedido.usuario.nombre_completo),
+                _celda(pedido.usuario.email),
+                _celda(pedido.telefono_contacto),
+                _celda(pedido.direccion),
+                _celda(pedido.ciudad),
+                _celda(pedido.codigo_postal),
+                pedido.cantidad_items,
+                f"{pedido.total:.2f}".replace(".", ","),
+            ]
+        )
+    return respuesta
 
 
 # ---------------------------------------------------------------------------

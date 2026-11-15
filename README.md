@@ -46,9 +46,11 @@ Incluye catálogo público, carrito en sesión, checkout con datos de envío, hi
 - Redirección posterior al login: clientes → catálogo; staff → panel de gestión.
 - Un usuario autenticado sin permisos recibe una página **403** personalizada.
 - Autorización con `LoginRequiredMixin` + `PermissionRequiredMixin` y un backend (`PermisosPorRolBackend`) que traduce el rol a permisos de Django, incluido el acceso al admin.
+- Las vistas de función usan `@login_required` y `@permission_required` (ver reporte CSV más abajo).
 
 ### Panel y Django Admin
 - Panel con ventas, pedidos por estado, ticket promedio, valor del inventario, productos con stock bajo, clientes y últimos pedidos.
+- **Reporte CSV de pedidos** (`/panel/pedidos.csv`): vista de función con `@login_required` y `@permission_required`, respeta los filtros de estado y búsqueda del listado. Anónimo → login; Cliente → 403; Empleado/Admin → descarga.
 - Django Admin con `search_fields`, `list_filter`, `list_display`, `list_editable` (`stock` y `activo`), jerarquía por fecha y filtros.
 - Detalle de pedido en el admin como **inline de solo lectura**, sin alta ni borrado de líneas.
 - Acciones masivas para marcar pedidos como Pagado/Enviado o cancelarlos reponiendo stock.
@@ -218,7 +220,7 @@ python manage.py createsuperuser
 python manage.py test
 ```
 
-Resultado actual: **75 pruebas OK** (usuarios, catálogo, carrito, checkout, pedidos, panel, admin, errores y comando de datos demo).
+Resultado actual: **79 pruebas OK** (usuarios, catálogo, carrito, checkout, pedidos, panel, admin, errores y comando de datos demo).
 
 Cobertura funcional incluida:
 
@@ -231,6 +233,7 @@ Cobertura funcional incluida:
 - Búsqueda de pedidos por número visible (`#000001`) en la app y en el admin.
 - Transiciones de estado y reposición de stock al cancelar.
 - Métricas del dashboard.
+- Reporte CSV protegido con `@login_required`/`@permission_required` y respeto de los filtros.
 - Pantallas del Django Admin y detalle histórico de solo lectura.
 - Idempotencia de `seed_demo`.
 
@@ -256,6 +259,7 @@ python manage.py test panel
 - **Consultas optimizadas** con `select_related`/`prefetch_related` en catálogo, pedidos, panel y admin.
 - **Django Admin** como segunda interfaz de gestión, con edición rápida de stock y acciones masivas.
 - **Mensajes de feedback** con el framework de mensajes mapeado a alertas de Bootstrap.
+- **Reporte CSV** de pedidos como vista de función con decoradores, con protección contra fórmulas de Excel (CSV injection).
 - **CSRF y XSS**: todos los formularios usan `{% csrf_token %}`, las plantillas escapan variables por defecto y no se usa `safe` con datos de usuario.
 
 ---
@@ -275,9 +279,10 @@ python manage.py test panel
 | Checkout con datos de envío y confirmación | `CheckoutView`, `CheckoutForm`, `crear_pedido` |
 | Estados y cancelación con reposición de stock | `pedidos/services.py` |
 | Seguridad a nivel de objeto | `PedidoListView` / `PedidoDetailView` |
-| Panel con reportes | `panel/views.py` |
+| Panel con reportes | `panel/views.py` (dashboard + exportación CSV) |
 | Admin personalizado | `usuarios/admin.py`, `catalogo/admin.py`, `pedidos/admin.py` |
 | Vistas basadas en clases | `ListView`, `DetailView`, `CreateView`, `UpdateView`, `DeleteView`, `FormView`, `TemplateView` |
+| Decoradores en vistas de función | `@login_required` + `@permission_required` en `panel.views.exportar_pedidos_csv` |
 | Herencia de templates y partials | `templates/base.html`, `templates/partials/` |
 | Evitar N+1 | `select_related`, `prefetch_related`, `annotate` |
 | Formularios con validaciones | `forms.py` de cada app |
@@ -304,6 +309,7 @@ Las capturas de la aplicación están en [`docs/capturas/`](docs/capturas/):
 | `11-admin-pedido.png` | Detalle histórico de solo lectura en el admin |
 | `12-productos-empleado.png` | Gestión de productos para Empleado |
 | `13-pedido-staff.png` | Detalle de pedido con acciones de estado |
+| `14-admin-empleado.png` | Django Admin del Empleado: solo Catálogo y Pedidos |
 
 ![Catálogo](docs/capturas/01-catalogo.png)
 

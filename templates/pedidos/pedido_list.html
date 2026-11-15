@@ -17,9 +17,16 @@
                 {% endif %}
             </p>
         </div>
-        <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
-            <i class="bi bi-bag me-2"></i>Seguir comprando
-        </a>
+        <div class="d-flex flex-wrap gap-2">
+            {% if user.es_gestor %}
+                <a href="{% url 'panel:exportar_pedidos' %}?{{ request.GET.urlencode }}" class="btn btn-soft">
+                    <i class="bi bi-filetype-csv me-2"></i>Exportar CSV
+                </a>
+            {% endif %}
+            <a href="{% url 'catalogo:producto_list' %}" class="btn btn-soft">
+                <i class="bi bi-bag me-2"></i>Seguir comprando
+            </a>
+        </div>
     </div>
 
     <div class="surface-card surface-card-pad mb-3">

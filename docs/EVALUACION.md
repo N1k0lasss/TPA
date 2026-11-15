@@ -64,6 +64,7 @@ Credenciales:
 6. Crear un pedido nuevo y cancelarlo para mostrar la reposición automática de stock.
 7. Intentar abrir `/cuenta/gestion/` y mostrar el 403 (el empleado no administra usuarios).
 8. Abrir `/admin/` y mostrar que solo aparecen Catálogo y Pedidos; intentar `/admin/usuarios/usuario/` y ver el 403.
+9. Descargar **Exportar CSV** desde el panel y abrir el archivo en Excel para mostrar el reporte.
 
 ### 2.5 Administrador
 1. Cerrar sesión e ingresar con `admin@invenshop.com`.
@@ -76,7 +77,7 @@ Credenciales:
 5. Ejecutar una acción masiva sobre pedidos y verificar el mensaje de resultado.
 
 ### 2.6 Pruebas y cierre
-1. Ejecutar `python manage.py test` y mostrar **75 pruebas OK**.
+1. Ejecutar `python manage.py test` y mostrar **79 pruebas OK**.
 2. Mostrar las páginas de error 403 y 404 personalizadas.
 3. Recordar que las credenciales y `DEBUG=True` son solo para la entrega académica.
 
@@ -89,6 +90,7 @@ Credenciales:
 | Proyecto Django con apps modulares | `usuarios`, `catalogo`, `pedidos`, `panel` | ✅ |
 | Usuario personalizado y login por email | `usuarios/models.py`, `EmailAuthenticationForm` | ✅ |
 | Roles y permisos | `Usuario.Rol`, `PermisosPorRolBackend`, `PermissionRequiredMixin`, `GestorMixin`, `AdminMixin`, vistas 403 | ✅ |
+| Decoradores en vistas de función | `@login_required` + `@permission_required` en `panel.views.exportar_pedidos_csv` | ✅ |
 | Modelos y relaciones 1:N | `Categoria`, `Producto`, `Pedido`, `DetallePedido` | ✅ |
 | Migraciones | `*/migrations/0001_initial.py`, `pedidos/0002_initial.py`, `usuarios/0002_alter_usuario_options.py` | ✅ |
 | Catálogo con 12 por página | `ProductoListView.paginate_by = 12` | ✅ |
@@ -110,6 +112,7 @@ Credenciales:
 | Cliente solo ve sus pedidos | Filtro por usuario y 404 en detalle ajeno | ✅ |
 | Admin con búsqueda y filtros | `search_fields`, `list_filter`, `date_hierarchy`; búsqueda por número visible `#000006` | ✅ |
 | Edición rápida de stock/activo | `list_editable` en `ProductoAdmin` | ✅ |
+| Reporte descargable | CSV de pedidos con filtros (`/panel/pedidos.csv`) | ✅ |
 | Inline de pedido histórico | `DetallePedidoInline` de solo lectura | ✅ |
 | Vistas basadas en clases | ListView, DetailView, CreateView, UpdateView, DeleteView, FormView, TemplateView | ✅ |
 | ORM y optimización | `select_related`, `prefetch_related`, `annotate` | ✅ |
@@ -117,7 +120,7 @@ Credenciales:
 | CSRF / XSS | `{% csrf_token %}`, escape automático, sin `safe` con datos de usuario | ✅ |
 | Herencia de templates | `base.html` + templates por app + partials | ✅ |
 | Mensajes de feedback | Framework de mensajes con clases Bootstrap | ✅ |
-| Pruebas automatizadas | 75 tests en las cuatro apps | ✅ |
+| Pruebas automatizadas | 79 tests en las cuatro apps | ✅ |
 | Datos de demostración | `seed_demo` idempotente con imágenes | ✅ |
 
 ---

@@ -5,7 +5,6 @@ from decimal import Decimal
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views import View
@@ -15,6 +14,7 @@ from catalogo.models import Producto
 from usuarios.mixins import GestorMixin
 
 from .carrito import Carrito
+from .consultas import filtrar_pedidos
 from .forms import CheckoutForm, EstadoPedidoForm
 from .models import Pedido
 from .services import cambiar_estado, crear_pedido, estados_permitidos
@@ -180,28 +180,12 @@ class PedidoListView(LoginRequiredMixin, ListView):
             .prefetch_related("detalles")
             .order_by("-fecha_creacion")
         )
-        if not self.request.user.es_gestor:
-            queryset = queryset.filter(usuario=self.request.user)
-
-        estado = self.request.GET.get("estado", "").strip()
-        if estado in Pedido.Estado.values:
-            queryset = queryset.filter(estado=estado)
-
-        busqueda = self.request.GET.get("q", "").strip()
-        if busqueda:
-            filtro = Q()
-            if self.request.user.es_gestor:
-                filtro |= (
-                    Q(usuario__email__icontains=busqueda)
-                    | Q(usuario__nombre__icontains=busqueda)
-                    | Q(usuario__apellido__icontains=busqueda)
-                )
-            numero = busqueda.lstrip("#")
-            if numero.isdigit():
-                filtro |= Q(pk=int(numero))
-            if filtro:
-                queryset = queryset.filter(filtro)
-        return queryset
+        return filtrar_pedidos(
+            queryset,
+            usuario=self.request.user,
+            busqueda=self.request.GET.get("q", ""),
+            estado=self.request.GET.get("estado", ""),
+        )
 
     def get_context_data(self, **kwargs):
         contexto = super().get_context_data(**kwargs)
