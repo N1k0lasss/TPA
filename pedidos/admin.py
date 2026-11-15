@@ -93,6 +93,14 @@ class PedidoAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).prefetch_related("detalles")
 
+    def get_search_results(self, request, queryset, search_term):
+        """Permite buscar por el número visible (#000006) además del id."""
+        resultados, use_distinct = super().get_search_results(request, queryset, search_term)
+        numero = search_term.strip().lstrip("#")
+        if numero.isdigit():
+            resultados |= self.model.objects.filter(pk=int(numero))
+        return resultados, use_distinct
+
     @admin.display(description="Pedido", ordering="-fecha_creacion")
     def numero(self, obj):
         return obj.numero

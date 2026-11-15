@@ -116,6 +116,12 @@ class LoginTests(TestCase):
         )
         self.assertRedirects(respuesta, reverse("panel:dashboard"))
 
+    def test_permisos_personalizados_por_rol(self):
+        self.assertTrue(self.empleado.has_perm("usuarios.gestionar_tienda"))
+        self.assertFalse(self.empleado.has_perm("usuarios.gestionar_usuarios"))
+        self.assertTrue(self.admin.has_perm("usuarios.gestionar_usuarios"))
+        self.assertFalse(self.cliente.has_perm("usuarios.gestionar_tienda"))
+
     def test_login_acepta_email_con_mayusculas(self):
         respuesta = self.client.post(
             reverse("usuarios:login"),

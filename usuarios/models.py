@@ -40,6 +40,10 @@ class Usuario(AbstractUser):
         verbose_name = "usuario"
         verbose_name_plural = "usuarios"
         ordering = ["apellido", "nombre"]
+        permissions = [
+            ("gestionar_tienda", "Puede gestionar catálogo y pedidos"),
+            ("gestionar_usuarios", "Puede gestionar usuarios y roles"),
+        ]
 
     def __str__(self):
         return f"{self.nombre_completo} ({self.email})"

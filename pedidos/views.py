@@ -196,8 +196,9 @@ class PedidoListView(LoginRequiredMixin, ListView):
                     | Q(usuario__nombre__icontains=busqueda)
                     | Q(usuario__apellido__icontains=busqueda)
                 )
-            if busqueda.isdigit():
-                filtro |= Q(pk=int(busqueda))
+            numero = busqueda.lstrip("#")
+            if numero.isdigit():
+                filtro |= Q(pk=int(numero))
             if filtro:
                 queryset = queryset.filter(filtro)
         return queryset

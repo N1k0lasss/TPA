@@ -281,6 +281,20 @@ class SeguridadPedidosTests(TestCase):
         self.assertContains(respuesta, self.pedido.numero)
         self.assertContains(respuesta, self.pedido_ajeno.numero)
 
+    def test_busqueda_por_numero_visible_con_almohadilla(self):
+        self.client.force_login(self.cliente)
+        respuesta = self.client.get(reverse("pedidos:lista"), {"q": self.pedido.numero})
+
+        encontrados = [pedido.pk for pedido in respuesta.context["pedidos"]]
+        self.assertEqual(encontrados, [self.pedido.pk])
+
+    def test_gestor_busca_pedido_por_numero_visible(self):
+        self.client.force_login(self.empleado)
+        respuesta = self.client.get(reverse("pedidos:lista"), {"q": self.pedido.numero})
+
+        encontrados = [pedido.pk for pedido in respuesta.context["pedidos"]]
+        self.assertEqual(encontrados, [self.pedido.pk])
+
     def test_filtro_por_estado(self):
         crear_pedido(self.cliente, self.producto, estado=Pedido.Estado.PAGADO)
         self.client.force_login(self.cliente)

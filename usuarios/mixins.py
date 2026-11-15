@@ -1,6 +1,10 @@
 """Mixins de autorización reutilizables para las vistas basadas en clases."""
 
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import (
+    LoginRequiredMixin,
+    PermissionRequiredMixin,
+    UserPassesTestMixin,
+)
 from django.core.exceptions import PermissionDenied
 
 
@@ -25,13 +29,15 @@ class RolRequeridoMixin(LoginRequiredMixin, UserPassesTestMixin):
         raise PermissionDenied("No tenés permisos para acceder a esta sección.")
 
 
-class GestorMixin(RolRequeridoMixin):
-    """Solo Administrador y Empleado."""
+class GestorMixin(RolRequeridoMixin, PermissionRequiredMixin):
+    """Solo Administrador y Empleado, con el permiso de gestión de tienda."""
 
     roles_permitidos = ("Admin", "Empleado")
+    permission_required = "usuarios.gestionar_tienda"
 
 
-class AdminMixin(RolRequeridoMixin):
-    """Solo Administrador."""
+class AdminMixin(RolRequeridoMixin, PermissionRequiredMixin):
+    """Solo Administrador, con el permiso de gestión de usuarios."""
 
     roles_permitidos = ("Admin",)
+    permission_required = "usuarios.gestionar_usuarios"

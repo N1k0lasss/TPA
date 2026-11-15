@@ -150,9 +150,61 @@ class AdminSmokeTests(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "histórico de solo lectura")
 
+    def test_busqueda_de_pedido_por_numero_visible(self):
+        respuesta = self.client.get(
+            reverse("admin:pedidos_pedido_changelist"),
+            {"q": self.pedido.numero},
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta.context["cl"].result_count, 1)
+
     def test_admin_no_permite_agregar_pedidos_manualmente(self):
         respuesta = self.client.get(reverse("admin:pedidos_pedido_add"))
         self.assertEqual(respuesta.status_code, 403)
+
+
+class AdminPermisosPorRolTests(TestCase):
+    """El backend de roles también controla el acceso al Django Admin."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.empleado = Usuario.objects.create_user(
+            email="empleado@example.com",
+            password="ClaveSegura123!",
+            nombre="Bruno",
+            apellido="Fernández",
+            rol=Usuario.Rol.EMPLEADO,
+        )
+        cls.admin = Usuario.objects.create_user(
+            email="admin@example.com",
+            password="ClaveSegura123!",
+            nombre="Ana",
+            apellido="Gómez",
+            rol=Usuario.Rol.ADMIN,
+        )
+
+    def test_empleado_accede_al_admin_de_catalogo_y_pedidos(self):
+        self.client.force_login(self.empleado)
+
+        self.assertEqual(
+            self.client.get(reverse("admin:catalogo_producto_changelist")).status_code,
+            200,
+        )
+        self.assertEqual(
+            self.client.get(reverse("admin:pedidos_pedido_changelist")).status_code,
+            200,
+        )
+
+    def test_empleado_no_accede_al_admin_de_usuarios(self):
+        self.client.force_login(self.empleado)
+        respuesta = self.client.get(reverse("admin:usuarios_usuario_changelist"))
+        self.assertEqual(respuesta.status_code, 403)
+
+    def test_admin_no_superusuario_accede_al_admin_de_usuarios(self):
+        self.client.force_login(self.admin)
+        respuesta = self.client.get(reverse("admin:usuarios_usuario_changelist"))
+        self.assertEqual(respuesta.status_code, 200)
 
 
 class PaginasDeErrorTests(TestCase):

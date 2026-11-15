@@ -38,13 +38,14 @@ Incluye catálogo público, carrito en sesión, checkout con datos de envío, hi
 | Rol | Alcance |
 | --- | --- |
 | **Administrador** | Acceso total: panel, reportes, catálogo, pedidos, usuarios y roles, Django Admin. |
-| **Empleado** | Panel, catálogo, categorías, stock y cambios de estado de pedidos. No gestiona usuarios. |
+| **Empleado** | Panel, catálogo, categorías, stock, cambios de estado de pedidos y Django Admin de catálogo/pedidos. No gestiona usuarios. |
 | **Cliente** | Catálogo, carrito, checkout, historial y perfil propio. |
 
 - Registro público: toda cuenta nueva recibe el rol **Cliente**.
 - Login por **email** (no existe `username`).
 - Redirección posterior al login: clientes → catálogo; staff → panel de gestión.
 - Un usuario autenticado sin permisos recibe una página **403** personalizada.
+- Autorización con `LoginRequiredMixin` + `PermissionRequiredMixin` y un backend (`PermisosPorRolBackend`) que traduce el rol a permisos de Django, incluido el acceso al admin.
 
 ### Panel y Django Admin
 - Panel con ventas, pedidos por estado, ticket promedio, valor del inventario, productos con stock bajo, clientes y últimos pedidos.
@@ -52,6 +53,7 @@ Incluye catálogo público, carrito en sesión, checkout con datos de envío, hi
 - Detalle de pedido en el admin como **inline de solo lectura**, sin alta ni borrado de líneas.
 - Acciones masivas para marcar pedidos como Pagado/Enviado o cancelarlos reponiendo stock.
 - Validación de transiciones de estado también desde el admin.
+- Acceso al admin según el rol: el Empleado ve Catálogo y Pedidos; el Administrador ve además Usuarios, Grupos y Permisos.
 
 ---
 
@@ -158,6 +160,8 @@ python -c "from django.core.management.utils import get_random_secret_key; print
 
 ### PostgreSQL (opcional)
 
+El proyecto incluye `psycopg[binary]` en `requirements.txt` para esta variante.
+
 1. Crear la base y el usuario.
 2. En `.env` establecer `DB_ENGINE=postgres` y completar `DB_*`.
 3. Ejecutar `python manage.py migrate` y `python manage.py seed_demo`.
@@ -214,16 +218,17 @@ python manage.py createsuperuser
 python manage.py test
 ```
 
-Resultado actual: **68 pruebas OK** (usuarios, catálogo, carrito, checkout, pedidos, panel, admin, errores y comando de datos demo).
+Resultado actual: **75 pruebas OK** (usuarios, catálogo, carrito, checkout, pedidos, panel, admin, errores y comando de datos demo).
 
 Cobertura funcional incluida:
 
 - Registro, login por email, redirección por rol y cuentas inactivas.
-- Permisos por rol y páginas 403/404 personalizadas.
+- Permisos por rol, backend de permisos, acceso al admin por rol y páginas 403/404 personalizadas.
 - Búsqueda, filtros, orden, paginación y productos inactivos.
 - Validación de stock y operaciones del carrito.
 - Checkout atómico, precios congelados, validaciones de envío y carrito vaciado.
 - Seguridad a nivel de objeto en pedidos.
+- Búsqueda de pedidos por número visible (`#000001`) en la app y en el admin.
 - Transiciones de estado y reposición de stock al cancelar.
 - Métricas del dashboard.
 - Pantallas del Django Admin y detalle histórico de solo lectura.
@@ -260,7 +265,7 @@ python manage.py test panel
 | Requisito | Implementación |
 | --- | --- |
 | Usuario personalizado y login por email | `usuarios/models.py`, `usuarios/forms.py`, `EmailAuthenticationForm` |
-| Roles Admin / Empleado / Cliente | `Usuario.Rol`, mixins y vistas de gestión |
+| Roles Admin / Empleado / Cliente | `Usuario.Rol`, `PermisosPorRolBackend`, `PermissionRequiredMixin`, mixins de rol |
 | Categoría 1:N Producto | `catalogo/models.py` |
 | Usuario 1:N Pedido | `Pedido.usuario` (`PROTECT`) |
 | Pedido 1:N DetallePedido | `DetallePedido.pedido` (`CASCADE`) |

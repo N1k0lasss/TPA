@@ -138,6 +138,13 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # ---------------------------------------------------------------------------
 AUTH_USER_MODEL = "usuarios.Usuario"
 
+# El backend por rol concede los permisos personalizados de InvenShop;
+# ModelBackend mantiene los permisos estándar de Django y el superusuario.
+AUTHENTICATION_BACKENDS = [
+    "usuarios.backends.PermisosPorRolBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
