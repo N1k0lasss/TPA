@@ -1,5 +1,6 @@
 """Pruebas de la app usuarios: registro, login por email y roles."""
 
+from django.contrib.auth.models import Group
 from django.test import TestCase
 from django.urls import reverse
 
@@ -251,3 +252,65 @@ class PerfilYPermisosTests(TestCase):
         respuesta = self.client.get(reverse("usuarios:usuario_list"), {"q": "Carla"})
         self.assertContains(respuesta, "Carla")
         self.assertNotContains(respuesta, "Otro Cliente")
+
+
+class GruposTests(TestCase):
+    """El rol se refleja en los Group de Django (REQ-04 de la auditoría)."""
+
+    @staticmethod
+    def _codenames(grupo):
+        return {
+            f"{permiso.content_type.app_label}.{permiso.codename}"
+            for permiso in grupo.permissions.all()
+        }
+
+    def test_grupos_creados_con_sus_permisos(self):
+        administradores = Group.objects.get(name="Administradores")
+        empleados = Group.objects.get(name="Empleados")
+        clientes = Group.objects.get(name="Clientes")
+
+        permisos_admin = self._codenames(administradores)
+        permisos_empleado = self._codenames(empleados)
+
+        self.assertIn("usuarios.gestionar_usuarios", permisos_admin)
+        self.assertIn("catalogo.change_producto", permisos_admin)
+        self.assertIn("pedidos.change_pedido", permisos_admin)
+        self.assertNotIn("usuarios.gestionar_usuarios", permisos_empleado)
+        self.assertIn("catalogo.change_producto", permisos_empleado)
+        self.assertEqual(clientes.permissions.count(), 0)
+
+    def test_al_crear_usuario_se_asigna_el_grupo_de_su_rol(self):
+        cliente = Usuario.objects.create_user(
+            email="cliente@example.com", password="ClaveSegura123!",
+            nombre="Carla", apellido="Ríos",
+        )
+        empleado = Usuario.objects.create_user(
+            email="empleado@example.com", password="ClaveSegura123!",
+            nombre="Bruno", apellido="Fernández", rol=Usuario.Rol.EMPLEADO,
+        )
+        admin = Usuario.objects.create_user(
+            email="admin@example.com", password="ClaveSegura123!",
+            nombre="Ana", apellido="Gómez", rol=Usuario.Rol.ADMIN,
+        )
+
+        self.assertEqual(list(cliente.groups.values_list("name", flat=True)), ["Clientes"])
+        self.assertEqual(list(empleado.groups.values_list("name", flat=True)), ["Empleados"])
+        self.assertEqual(list(admin.groups.values_list("name", flat=True)), ["Administradores"])
+
+    def test_cambiar_rol_actualiza_el_grupo(self):
+        usuario = Usuario.objects.create_user(
+            email="cambio@example.com", password="ClaveSegura123!",
+            nombre="Nora", apellido="Díaz",
+        )
+        usuario.rol = Usuario.Rol.EMPLEADO
+        usuario.save()
+
+        self.assertEqual(list(usuario.groups.values_list("name", flat=True)), ["Empleados"])
+
+    def test_grupo_cliente_no_abre_el_admin(self):
+        cliente = Usuario.objects.create_user(
+            email="sinadmin@example.com", password="ClaveSegura123!",
+            nombre="Sofía", apellido="López",
+        )
+        self.assertFalse(cliente.has_perm("pedidos.view_pedido"))
+        self.assertFalse(cliente.has_module_perms("pedidos"))

@@ -12,6 +12,20 @@ funcionando.
 
 from django.contrib.auth.backends import ModelBackend
 
+# Grupos de Django que reflejan los roles de la tienda. El rol sigue siendo la
+# fuente de verdad (lo edita el Administrador desde el panel/usuario); el grupo
+# se sincroniza automáticamente para cumplir la recomendación de la cátedra de
+# gestionar permisos en bloque con el modelo Group.
+GRUPO_ADMIN = "Administradores"
+GRUPO_EMPLEADO = "Empleados"
+GRUPO_CLIENTE = "Clientes"
+
+GRUPOS_POR_ROL = {
+    "Admin": GRUPO_ADMIN,
+    "Empleado": GRUPO_EMPLEADO,
+    "Cliente": GRUPO_CLIENTE,
+}
+
 PERMISOS_EMPLEADO = {
     "usuarios.gestionar_tienda",
     # Catálogo y stock
@@ -52,6 +66,15 @@ APPS_POR_ROL = {
     "Admin": {"usuarios", "catalogo", "pedidos", "auth"},
     "Empleado": {"catalogo", "pedidos"},
     "Cliente": set(),
+}
+
+# Los clientes no reciben permisos de modelo: su privacidad se resuelve en las
+# vistas (queryset filtrado por usuario). Darles permisos de modelo los dejaría
+# entrar al Django Admin, que no forma parte de su rol.
+PERMISOS_POR_GRUPO = {
+    GRUPO_ADMIN: PERMISOS_ADMIN,
+    GRUPO_EMPLEADO: PERMISOS_EMPLEADO,
+    GRUPO_CLIENTE: set(),
 }
 
 

@@ -74,10 +74,11 @@ Credenciales:
    - Productos: búsqueda, filtros, edición rápida de `stock` y `activo`.
    - Pedidos: inline de detalle en solo lectura, sin alta ni borrado.
    - Usuarios: formulario personalizado sin `username`.
+   - Grupos: los tres grupos (`Administradores`, `Empleados`, `Clientes`) con sus permisos en bloque.
 5. Ejecutar una acción masiva sobre pedidos y verificar el mensaje de resultado.
 
 ### 2.6 Pruebas y cierre
-1. Ejecutar `python manage.py test` y mostrar **79 pruebas OK**.
+1. Ejecutar `python manage.py test` y mostrar **83 pruebas OK**.
 2. Mostrar las páginas de error 403 y 404 personalizadas.
 3. Recordar que las credenciales y `DEBUG=True` son solo para la entrega académica.
 
@@ -89,10 +90,10 @@ Credenciales:
 | --- | --- | --- |
 | Proyecto Django con apps modulares | `usuarios`, `catalogo`, `pedidos`, `panel` | ✅ |
 | Usuario personalizado y login por email | `usuarios/models.py`, `EmailAuthenticationForm` | ✅ |
-| Roles y permisos | `Usuario.Rol`, `PermisosPorRolBackend`, `PermissionRequiredMixin`, `GestorMixin`, `AdminMixin`, vistas 403 | ✅ |
+| Roles y permisos | `Usuario.Rol`, `PermisosPorRolBackend`, `Group` (migración `0003` + señales), `PermissionRequiredMixin`, `GestorMixin`, `AdminMixin`, vistas 403 | ✅ |
 | Decoradores en vistas de función | `@login_required` + `@permission_required` en `panel.views.exportar_pedidos_csv` | ✅ |
 | Modelos y relaciones 1:N | `Categoria`, `Producto`, `Pedido`, `DetallePedido` | ✅ |
-| Migraciones | `*/migrations/0001_initial.py`, `pedidos/0002_initial.py`, `usuarios/0002_alter_usuario_options.py` | ✅ |
+| Migraciones | `*/migrations/0001_initial.py`, `pedidos/0002_initial.py`, `usuarios/0002_alter_usuario_options.py`, `usuarios/0003_grupos_iniciales.py` | ✅ |
 | Catálogo con 12 por página | `ProductoListView.paginate_by = 12` | ✅ |
 | Búsqueda por nombre/descripción | `Q(nombre__icontains)` combinado con `Q(descripcion__icontains)` | ✅ |
 | Filtro por categoría y orden | Parámetros `categoria` y `orden` | ✅ |
@@ -120,7 +121,7 @@ Credenciales:
 | CSRF / XSS | `{% csrf_token %}`, escape automático, sin `safe` con datos de usuario | ✅ |
 | Herencia de templates | `base.html` + templates por app + partials | ✅ |
 | Mensajes de feedback | Framework de mensajes con clases Bootstrap | ✅ |
-| Pruebas automatizadas | 79 tests en las cuatro apps | ✅ |
+| Pruebas automatizadas | 83 tests en las cuatro apps (incluye grupos por rol) | ✅ |
 | Datos de demostración | `seed_demo` idempotente con imágenes | ✅ |
 
 ---
@@ -130,22 +131,25 @@ Credenciales:
 1. **¿Por qué el carrito está en la sesión?**
    Porque la consigna lo pide así y permite comprar sin registro. El carrito se valida contra la base al confirmar, donde se descuenta el stock de forma atómica.
 
-2. **¿Cómo se evita que dos compras dejen stock negativo?**
+2. **¿Por qué hay roles y también grupos de Django?**
+   El campo `rol` es la fuente de verdad y el backend `PermisosPorRolBackend` resuelve la autorización de la tienda. Los grupos `Administradores`, `Empleados` y `Clientes` existen para cumplir la recomendación de gestionar permisos en bloque: los crea la migración `usuarios.0003`, la señal `post_migrate` les asigna permisos y `post_save` mantiene el grupo alineado cuando cambia el rol. `Clientes` no tiene permisos de modelo a propósito: darle `view_pedido` le abriría el Django Admin; su privacidad se garantiza filtrando el queryset por usuario.
+
+3. **¿Cómo se evita que dos compras dejen stock negativo?**
    `crear_pedido` abre una transacción, bloquea los productos con `select_for_update`, valida el stock y recién entonces crea el pedido y descuenta.
 
-3. **¿Por qué se guarda el precio en `DetallePedido`?**
+4. **¿Por qué se guarda el precio en `DetallePedido`?**
    Para conservar el histórico: si el producto cambia de precio o se elimina, el pedido mantiene el valor original.
 
-4. **¿Cómo se protege el acceso a pedidos ajenos?**
+5. **¿Cómo se protege el acceso a pedidos ajenos?**
    El queryset se filtra por `usuario=request.user` para clientes y el detalle devuelve 404 si el pedido no pertenece al usuario.
 
-5. **¿Por qué `PROTECT` en usuario y producto?**
+6. **¿Por qué `PROTECT` en usuario y producto?**
    Para impedir que se borre un cliente con pedidos o un producto con ventas, preservando la integridad histórica.
 
-6. **¿Cómo se evita el doble descuento/reposición de stock?**
+7. **¿Cómo se evita el doble descuento/reposición de stock?**
    El cambio de estado valida la transición y, si el pedido ya está en el estado destino, no hace nada. La cancelación solo repone stock cuando pasa a Cancelado por primera vez.
 
-7. **¿Qué consultas se optimizaron?**
+8. **¿Qué consultas se optimizaron?**
    Catálogo (`select_related("categoria")`), pedidos (`select_related("usuario")`, `prefetch_related("detalles")`), dashboard y admin.
 
 ---

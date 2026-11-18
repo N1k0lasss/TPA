@@ -46,6 +46,7 @@ Incluye catálogo público, carrito en sesión, checkout con datos de envío, hi
 - Redirección posterior al login: clientes → catálogo; staff → panel de gestión.
 - Un usuario autenticado sin permisos recibe una página **403** personalizada.
 - Autorización con `LoginRequiredMixin` + `PermissionRequiredMixin` y un backend (`PermisosPorRolBackend`) que traduce el rol a permisos de Django, incluido el acceso al admin.
+- Los roles se reflejan además en los grupos de Django **`Administradores`, `Empleados` y `Clientes`**: la migración `usuarios.0003` los crea y las señales de `usuarios/senales.py` mantienen la asociación y los permisos sincronizados con el rol. Los permisos se gestionan en bloque desde `Grupos` en el admin.
 - Las vistas de función usan `@login_required` y `@permission_required` (ver reporte CSV más abajo).
 
 ### Panel y Django Admin
@@ -220,7 +221,7 @@ python manage.py createsuperuser
 python manage.py test
 ```
 
-Resultado actual: **79 pruebas OK** (usuarios, catálogo, carrito, checkout, pedidos, panel, admin, errores y comando de datos demo).
+Resultado actual: **83 pruebas OK** (usuarios, catálogo, carrito, checkout, pedidos, panel, admin, errores, grupos y comando de datos demo).
 
 Cobertura funcional incluida:
 
@@ -251,7 +252,7 @@ python manage.py test panel
 ## 8. Decisiones de diseño
 
 - **Usuario personalizado antes de la primera migración**, con email como identificador y sin `username`.
-- **Rol en el modelo de usuario** y mixins reutilizables (`GestorMixin`, `AdminMixin`) para autorización.
+- **Rol en el modelo de usuario** y mixins reutilizables (`GestorMixin`, `AdminMixin`) para autorización. El mismo rol se sincroniza con los `Group` de Django (migración `usuarios.0003` y señales `post_migrate`/`post_save`), de modo que los permisos también se puedan administrar en bloque. El grupo `Clientes` no tiene permisos de modelo para no habilitar inadvertidamente el Django Admin; su privacidad se resuelve en las vistas.
 - **Carrito en sesión**, tal como pide la consigna, sin modelo adicional.
 - **Snapshot de precios y envío** en `Pedido`/`DetallePedido` para que el histórico no cambie si se edita el catálogo.
 - **`PROTECT`** en las relaciones con usuarios y productos para evitar borrados que rompan pedidos.
@@ -269,7 +270,7 @@ python manage.py test panel
 | Requisito | Implementación |
 | --- | --- |
 | Usuario personalizado y login por email | `usuarios/models.py`, `usuarios/forms.py`, `EmailAuthenticationForm` |
-| Roles Admin / Empleado / Cliente | `Usuario.Rol`, `PermisosPorRolBackend`, `PermissionRequiredMixin`, mixins de rol |
+| Roles Admin / Empleado / Cliente | `Usuario.Rol`, `PermisosPorRolBackend`, `Group` (migración `0003` + señales), `PermissionRequiredMixin`, mixins de rol |
 | Categoría 1:N Producto | `catalogo/models.py` |
 | Usuario 1:N Pedido | `Pedido.usuario` (`PROTECT`) |
 | Pedido 1:N DetallePedido | `DetallePedido.pedido` (`CASCADE`) |

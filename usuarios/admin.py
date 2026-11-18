@@ -37,7 +37,7 @@ class UsuarioAdmin(UserAdmin):
     search_fields = ("email", "nombre", "apellido", "telefono")
     ordering = ("apellido", "nombre")
     list_per_page = 20
-    readonly_fields = ("last_login", "date_joined")
+    readonly_fields = ("last_login", "date_joined", "groups", "user_permissions")
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
@@ -46,7 +46,11 @@ class UsuarioAdmin(UserAdmin):
             _("Rol y permisos"),
             {
                 "fields": ("rol", "is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
-                "description": "El rol define el acceso a la tienda, al panel de gestión y al admin.",
+                "description": (
+                    "El rol define el acceso y asigna automáticamente el grupo "
+                    "(Administradores, Empleados o Clientes). Los permisos se gestionan "
+                    "en bloque desde el formulario de Grupos."
+                ),
             },
         ),
         (_("Fechas importantes"), {"fields": ("last_login", "date_joined")}),
