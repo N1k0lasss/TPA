@@ -26,7 +26,7 @@
                         <div class="cart-row">
                             <a href="{{ item.producto.get_absolute_url }}">
                                 {% if item.producto.imagen %}
-                                    <img src="{{ item.producto.imagen.url }}" alt="{{ item.producto.nombre }}" class="cart-thumb">
+                                    <img src="{{ item.producto.imagen.url }}?v={{ item.producto.fecha_actualizacion|date:'U' }}" alt="{{ item.producto.nombre }}" class="cart-thumb">
                                 {% else %}
                                     <img src="{% static 'img/placeholder.svg' %}" alt="{{ item.producto.nombre }}" class="cart-thumb">
                                 {% endif %}

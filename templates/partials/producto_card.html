@@ -6,7 +6,7 @@ Requiere: producto
 <article class="card card-product h-100">
     <a href="{{ producto.get_absolute_url }}" class="product-media" aria-label="Ver {{ producto.nombre }}">
         {% if producto.imagen %}
-            <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" loading="lazy">
+            <img src="{{ producto.imagen.url }}?v={{ producto.fecha_actualizacion|date:'U' }}" alt="{{ producto.nombre }}" loading="lazy">
         {% else %}
             <img src="{% static 'img/placeholder.svg' %}" alt="Imagen genérica de {{ producto.nombre }}" loading="lazy">
         {% endif %}

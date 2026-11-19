@@ -43,7 +43,7 @@
                 {% for detalle in pedido.detalles.all %}
                     <div class="mini-item">
                         {% if detalle.producto.imagen %}
-                            <img src="{{ detalle.producto.imagen.url }}" alt="" class="mini-thumb">
+                            <img src="{{ detalle.producto.imagen.url }}?v={{ detalle.producto.fecha_actualizacion|date:'U' }}" alt="" class="mini-thumb">
                         {% else %}
                             <img src="{% static 'img/placeholder.svg' %}" alt="" class="mini-thumb">
                         {% endif %}

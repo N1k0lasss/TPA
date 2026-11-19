@@ -48,7 +48,7 @@
                     <div class="d-flex flex-wrap gap-3 align-items-start">
                         <div style="width:150px;">
                             {% if object.imagen %}
-                                <img src="{{ object.imagen.url }}" alt="Vista previa" class="img-fluid rounded-3 border"
+                                <img src="{{ object.imagen.url }}?v={{ object.fecha_actualizacion|date:'U' }}" alt="Vista previa" class="img-fluid rounded-3 border"
                                      data-preview-image style="aspect-ratio:1;object-fit:cover;width:150px;">
                             {% else %}
                                 <img src="{% static 'img/placeholder.svg' %}" alt="Vista previa"
