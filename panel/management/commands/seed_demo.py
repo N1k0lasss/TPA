@@ -10,6 +10,7 @@ productos con Pillow dentro de MEDIA_ROOT.
 
 from __future__ import annotations
 
+import shutil
 import textwrap
 from datetime import timedelta
 from decimal import Decimal
@@ -347,8 +348,9 @@ class Command(BaseCommand):
                 producto = Producto(
                     nombre=nombre,
                     stock=stock,
-                    imagen=self._preparar_imagen(nombre, categoria_nombre),
                 )
+            if not self.sin_imagenes:
+                producto.imagen = self._preparar_imagen(nombre, categoria_nombre)
             producto.categoria = categorias[categoria_nombre]
             producto.descripcion = descripcion
             producto.precio = Decimal(precio)
@@ -520,8 +522,11 @@ class Command(BaseCommand):
         carpeta.mkdir(parents=True, exist_ok=True)
         archivo = carpeta / f"{slugify(nombre)}.png"
         relativa = f"productos/seed/{archivo.name}"
+        fuente = Path(settings.BASE_DIR) / "static" / "img" / "productos" / archivo.name
 
-        if not archivo.exists():
+        if fuente.exists():
+            shutil.copyfile(fuente, archivo)
+        elif not archivo.exists():
             self._generar_imagen(nombre, categoria_nombre, archivo)
         return relativa
 
