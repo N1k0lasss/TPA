@@ -316,16 +316,3 @@ Las capturas de la aplicación están en [`docs/capturas/`](docs/capturas/):
 
 ![Panel de gestión](docs/capturas/08-panel-admin.png)
 
----
-
-## 11. Documentación adicional
-
-- [`docs/EVALUACION.md`](docs/EVALUACION.md): checklist de la rúbrica y guion de demostración.
-- `TPA_pdf/extracted.txt`: texto extraído de la consigna original.
-
----
-
-## 12. Autor
-
-Proyecto académico de **Programación IV · 2026**.
-Tecnicatura Superior en Desarrollo de Software.
